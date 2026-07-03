@@ -39,5 +39,7 @@ npm run dev            # http://localhost:3000
    - `DATABASE_URL` — the same Neon connection string the pipeline uses
      (include `sslmode=require`).
    - `DASHBOARD_PASSWORD` — the shared dashboard password.
-3. Deploy. No other configuration is needed — the app uses the Node runtime
-   with a small `pg` pool, which works on Vercel serverless with Neon.
+3. Deploy. No other configuration is needed — the app talks to Neon through
+   `@neondatabase/serverless` (SQL over HTTPS), Neon's recommended driver for
+   Vercel serverless. It also avoids raw-TCP egress restrictions in
+   sandboxed/CI environments.

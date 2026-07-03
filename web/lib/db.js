@@ -1,28 +1,23 @@
-// Same connection pattern as the pipeline agents' db/client.js:
-// a pg Pool reading the Neon connection string from DATABASE_URL,
-// exposing a query(text, params) helper.
-const { Pool } = require('pg');
+// Neon serverless driver over HTTP — reads the same DATABASE_URL the
+// pipeline agents' db/client.js uses, and exposes the same
+// query(text, params) -> { rows } helper. The HTTP transport works on
+// Vercel serverless/edge and anywhere raw Postgres TCP is unavailable.
+const { neon } = require('@neondatabase/serverless');
 
-let pool;
+let sql;
 
-function getPool() {
-  if (!pool) {
+function getClient() {
+  if (!sql) {
     if (!process.env.DATABASE_URL) {
       throw new Error('DATABASE_URL is not set');
     }
-    pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-      // Neon requires TLS; sslmode=require in the URL covers most cases,
-      // this keeps it working even if the param is omitted.
-      ssl: { rejectUnauthorized: false },
-      max: 5,
-    });
+    sql = neon(process.env.DATABASE_URL, { fullResults: true });
   }
-  return pool;
+  return sql;
 }
 
 async function query(text, params) {
-  return getPool().query(text, params);
+  return getClient().query(text, params);
 }
 
 module.exports = { query };
