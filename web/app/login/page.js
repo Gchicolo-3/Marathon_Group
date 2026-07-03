@@ -1,6 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Button } from '../../components/ui/button';
+import { Input } from '../../components/ui/input';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
@@ -25,26 +29,28 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-wrap">
-      <h1>Marathon Group CRM</h1>
-      <div className="panel">
-        <form onSubmit={submit}>
-          <div className="field">
-            <label htmlFor="password">Password</label>
-            <input
-              id="password"
+    <div className="mx-auto mt-24 max-w-sm">
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-lg">Marathon Group CRM</CardTitle>
+          <p className="text-sm text-muted-foreground">Enter the shared password to continue</p>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={submit} className="space-y-3">
+            <Input
               type="password"
+              placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoFocus
             />
-          </div>
-          <button className="primary" type="submit" disabled={busy || !password}>
-            {busy ? 'Signing in…' : 'Sign in'}
-          </button>
-          {error && <p className="flash err">{error}</p>}
-        </form>
-      </div>
+            <Button type="submit" className="w-full" disabled={busy || !password}>
+              {busy && <Loader2 className="animate-spin" />} Sign in
+            </Button>
+            {error && <p className="text-center text-sm text-red-600">{error}</p>}
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
