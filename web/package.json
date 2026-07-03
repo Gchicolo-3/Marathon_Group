@@ -10,6 +10,7 @@
     "migrate": "node scripts/migrate-001-crm.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@neondatabase/serverless": "^1.1.0",
     "dotenv": "^16.4.5",
     "next": "^15.3.3",
