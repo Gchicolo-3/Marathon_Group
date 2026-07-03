@@ -5,24 +5,16 @@ const path = require('path');
 const Anthropic = require('@anthropic-ai/sdk');
 
 const client = new Anthropic();
-const VOICE = fs.readFileSync(path.join(__dirname, '../skills/VOICE.md'), 'utf8');
-const CAMPAIGN = fs.readFileSync(path.join(__dirname, '../skills/CAMPAIGN.md'), 'utf8');
-const MISSION = fs.readFileSync(path.join(__dirname, '../skills/MISSION.md'), 'utf8');
+const ICP = fs.readFileSync(path.join(__dirname, '../skills/ICP.md'), 'utf8');
 
-async function draftEmail(prospect) {
-  const prompt = `You are the copywriter agent for Marathon Group LLC.
+async function qualifyProspect(prospect) {
+  const prompt = `You are a qualification agent for Marathon Group LLC.
 
-Here is Michael's voice guide:
-${VOICE}
+Here is the ideal client profile:
+${ICP}
 
-Here is the campaign framework:
-${CAMPAIGN}
-
-Here is the mission context:
-${MISSION}
-
-Write a week 1 cold outreach email to this prospect.
-Follow Michael's voice exactly. Short, direct, human, no fluff.
+Score this prospect from 1 to 10 based on fit with the ICP.
+Consider their title, company, industry, and location.
 
 Prospect:
 Name: ${prospect.first_name} ${prospect.last_name}
@@ -30,12 +22,11 @@ Title: ${prospect.title}
 Company: ${prospect.company}
 Industry: ${prospect.industry}
 Location: ${prospect.location}
-Qualification notes: ${prospect.qualification_notes}
 
 Return ONLY valid JSON with no extra text:
 {
-  "subject": "email subject line",
-  "body": "full email body text"
+  "score": 0,
+  "notes": "brief reason for score"
 }`;
 
   const response = await client.messages.create({
@@ -50,43 +41,39 @@ Return ONLY valid JSON with no extra text:
 }
 
 async function run() {
-  console.log('Copywriter: starting...');
+  console.log('Qualifier: starting...');
   try {
     const result = await db.query(
-      `SELECT * FROM prospects WHERE status = 'qualified'
-       AND id NOT IN (SELECT prospect_id FROM email_drafts WHERE prospect_id IS NOT NULL)
-       LIMIT 10`
+      `SELECT * FROM prospects WHERE status = 'new' LIMIT 20`
     );
     const prospects = result.rows;
-    console.log(`Copywriter: drafting emails for ${prospects.length} prospects`);
+    console.log(`Qualifier: found ${prospects.length} prospects to qualify`);
 
-    let drafted = 0;
+    let qualified = 0;
+    let skipped = 0;
+
     for (const prospect of prospects) {
-      const { subject, body } = await draftEmail(prospect);
+      const { score, notes } = await qualifyProspect(prospect);
+      const newStatus = score >= 6 ? 'qualified' : 'disqualified';
 
       await db.query(
-        `INSERT INTO email_drafts (prospect_id, subject, body, status, campaign_week)
-         VALUES ($1,$2,$3,'pending',1)`,
-        [prospect.id, subject, body]
-      );
-
-      await db.query(
-        `UPDATE prospects SET status='emailed' WHERE id=$1`,
-        [prospect.id]
+        `UPDATE prospects SET qualification_score=$1, qualification_notes=$2, status=$3 WHERE id=$4`,
+        [score, notes, newStatus, prospect.id]
       );
 
       await db.query(
         `INSERT INTO activity_log (prospect_id, activity_type, notes) VALUES ($1,$2,$3)`,
-        [prospect.id, 'email_drafted', `Subject: ${subject}`]
+        [prospect.id, 'qualified', `Score: ${score}. ${notes}`]
       );
 
-      drafted++;
+      if (score >= 6) qualified++;
+      else skipped++;
     }
 
-    console.log(`Copywriter: drafted ${drafted} emails`);
-    return { success: true, drafted };
+    console.log(`Qualifier: ${qualified} qualified, ${skipped} skipped`);
+    return { success: true, qualified, skipped };
   } catch (err) {
-    console.error('Copywriter error:', err.message);
+    console.error('Qualifier error:', err.message);
     return { success: false, error: err.message };
   }
 }
