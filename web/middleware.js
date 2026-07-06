@@ -4,8 +4,9 @@ import { COOKIE_NAME, isValidSession } from './lib/auth';
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Login page and login endpoint stay open.
-  if (pathname === '/login' || pathname === '/api/login') {
+  // Login page and login endpoint stay open. Cron endpoints authenticate
+  // with CRON_SECRET inside the route (Vercel Cron has no session cookie).
+  if (pathname === '/login' || pathname === '/api/login' || pathname.startsWith('/api/cron/')) {
     return NextResponse.next();
   }
 
