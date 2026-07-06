@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import {
   ArrowLeft, Sparkles, Send, Check, Save, MessageSquarePlus,
-  StickyNote, ArrowRightLeft, Mail, Loader2, Building2, User,
+  StickyNote, ArrowRightLeft, Mail, Loader2, Building2, User, Pencil,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../../components/ui/card';
 import { Button } from '../../../components/ui/button';
@@ -40,6 +40,8 @@ export default function DealDetailPage() {
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [note, setNote] = useState('');
+  const [editing, setEditing] = useState(false);
+  const [edit, setEdit] = useState({});
   const [busy, setBusy] = useState('');
   const [flash, setFlash] = useState(null); // { kind: 'ok'|'err', text }
   const [loading, setLoading] = useState(true);
@@ -155,6 +157,49 @@ export default function DealDetailPage() {
       );
       setNote('');
       loadActivities();
+    });
+
+  const startEditing = () => {
+    setEdit({
+      title: deal.contact_title || '',
+      email: deal.contact_email || '',
+      phone: deal.contact_phone || '',
+      linkedin_url: deal.contact_linkedin_url || '',
+      score: deal.score ?? '',
+      source: deal.source || '',
+    });
+    setEditing(true);
+  };
+
+  const saveDetails = () =>
+    action('details', async () => {
+      await expectOk(
+        await fetch(`/api/contacts/${deal.contact_id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: edit.title.trim() || null,
+            email: edit.email.trim() || null,
+            phone: edit.phone.trim() || null,
+            linkedin_url: edit.linkedin_url.trim() || null,
+          }),
+        }),
+        'Failed to update contact'
+      );
+      await expectOk(
+        await fetch(`/api/deals/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            score: edit.score === '' ? null : Number(edit.score),
+            source: edit.source.trim() || null,
+          }),
+        }),
+        'Failed to update deal'
+      );
+      setEditing(false);
+      setFlash({ kind: 'ok', text: 'Details updated' });
+      loadDeal();
     });
 
   const changeStage = (stage) =>
@@ -314,53 +359,104 @@ export default function DealDetailPage() {
         {/* --------------------------- right column -------------------------- */}
         <div className="space-y-5">
           <Card>
-            <CardHeader>
+            <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Details</CardTitle>
+              {!editing && (
+                <Button variant="ghost" size="sm" onClick={startEditing} disabled={!!busy}>
+                  <Pencil /> Edit
+                </Button>
+              )}
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              <div className="flex items-start gap-2.5">
-                <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div>
+              {editing ? (
+                <div className="space-y-3">
                   <p className="font-medium">{deal.contact_name}</p>
-                  <p className="text-muted-foreground">{deal.contact_title || '—'}</p>
-                  {deal.contact_email ? (
-                    <a href={`mailto:${deal.contact_email}`} className="text-blue-600 hover:underline">
-                      {deal.contact_email}
-                    </a>
-                  ) : (
-                    <p className="text-muted-foreground">no email on file</p>
-                  )}
-                  {deal.contact_linkedin_url && (
-                    <a
-                      href={deal.contact_linkedin_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="block truncate text-blue-600 hover:underline"
-                    >
-                      LinkedIn profile
-                    </a>
-                  )}
+                  {[
+                    ['title', 'Title'],
+                    ['email', 'Email'],
+                    ['phone', 'Phone'],
+                    ['linkedin_url', 'LinkedIn URL'],
+                    ['source', 'Source'],
+                  ].map(([key, label]) => (
+                    <div key={key} className="space-y-1">
+                      <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {label}
+                      </label>
+                      <Input
+                        value={edit[key]}
+                        onChange={(e) => setEdit((s) => ({ ...s, [key]: e.target.value }))}
+                      />
+                    </div>
+                  ))}
+                  <div className="space-y-1">
+                    <label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Score (1–10)
+                    </label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={edit.score}
+                      onChange={(e) => setEdit((s) => ({ ...s, score: e.target.value }))}
+                    />
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <Button size="sm" onClick={saveDetails} disabled={!!busy}>
+                      {busy === 'details' ? <Loader2 className="animate-spin" /> : <Save />} Save
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditing(false)} disabled={!!busy}>
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-              </div>
-              <Separator />
-              <div className="flex items-start gap-2.5">
-                <Building2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
-                <div>
-                  <p className="font-medium">{deal.company_name}</p>
-                  <p className="text-muted-foreground">{deal.industry || '—'}</p>
-                </div>
-              </div>
-              <Separator />
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Score</p>
-                  <p className="font-semibold tabular-nums">{deal.score ?? '—'}</p>
-                </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Source</p>
-                  <p className="font-semibold">{deal.source || '—'}</p>
-                </div>
-              </div>
+              ) : (
+                <>
+                  <div className="flex items-start gap-2.5">
+                    <User className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{deal.contact_name}</p>
+                      <p className="text-muted-foreground">{deal.contact_title || '—'}</p>
+                      {deal.contact_email ? (
+                        <a href={`mailto:${deal.contact_email}`} className="text-blue-600 hover:underline">
+                          {deal.contact_email}
+                        </a>
+                      ) : (
+                        <p className="text-muted-foreground">no email on file</p>
+                      )}
+                      {deal.contact_phone && <p className="text-muted-foreground">{deal.contact_phone}</p>}
+                      {deal.contact_linkedin_url && (
+                        <a
+                          href={deal.contact_linkedin_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="block truncate text-blue-600 hover:underline"
+                        >
+                          LinkedIn profile
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="flex items-start gap-2.5">
+                    <Building2 className="mt-0.5 h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <p className="font-medium">{deal.company_name}</p>
+                      <p className="text-muted-foreground">{deal.industry || '—'}</p>
+                    </div>
+                  </div>
+                  <Separator />
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Score</p>
+                      <p className="font-semibold tabular-nums">{deal.score ?? '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Source</p>
+                      <p className="font-semibold">{deal.source || '—'}</p>
+                    </div>
+                  </div>
+                </>
+              )}
             </CardContent>
           </Card>
 

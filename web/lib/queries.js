@@ -239,6 +239,25 @@ async function listActivities(dealId) {
   return r.rows;
 }
 
+/* ------------------------------ agent runs ----------------------------- */
+
+async function listAgentRuns(limit = 50) {
+  const r = await db.query(
+    `SELECT * FROM agent_runs ORDER BY created_at DESC, id DESC LIMIT $1`,
+    [limit]
+  );
+  return r.rows;
+}
+
+async function logAgentRun({ run_type, prospects_found = 0, drafts_created = 0, errors = null }) {
+  const r = await db.query(
+    `INSERT INTO agent_runs (run_type, prospects_found, drafts_created, errors)
+     VALUES ($1, $2, $3, $4) RETURNING *`,
+    [run_type, prospects_found, drafts_created, errors]
+  );
+  return r.rows[0];
+}
+
 /* -------------------------------- drafts ------------------------------- */
 
 async function getLatestDraft(dealId) {
@@ -287,6 +306,6 @@ module.exports = {
   listCompanies, getCompany, createCompany, updateCompany, deleteCompany,
   listContacts, getContact, createContact, updateContact, deleteContact,
   listDeals, getDeal, createDeal, updateDeal, deleteDeal, setDealStage, getDraftContext,
-  logActivity, listActivities,
+  logActivity, listActivities, listAgentRuns, logAgentRun,
   getLatestDraft, updateDraft, setDraftStatus, insertDraft,
 };
