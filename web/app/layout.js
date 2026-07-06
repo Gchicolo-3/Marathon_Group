@@ -17,6 +17,8 @@ export default function RootLayout({ children }) {
             </Link>
             <nav className="flex items-center gap-4 text-sm text-slate-300">
               <Link href="/" className="transition-colors hover:text-white">Pipeline</Link>
+              <Link href="/queue" className="transition-colors hover:text-white">Approval queue</Link>
+              <Link href="/runs" className="transition-colors hover:text-white">Runs</Link>
             </nav>
           </div>
         </header>
