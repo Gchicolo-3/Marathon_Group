@@ -27,7 +27,8 @@ export default async function RunsPage() {
         <div>
           <h1 className="text-xl font-bold tracking-tight">Pipeline runs</h1>
           <p className="text-sm text-muted-foreground">
-            Agent run history · the Run button drafts emails for qualified deals without one
+            Runs automatically weekday mornings (7 AM ET) — drafts emails for qualified deals
+            without one. The button triggers an extra run manually.
           </p>
         </div>
         <RunPipelineButton />
