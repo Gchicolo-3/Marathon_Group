@@ -20,10 +20,10 @@ const LATEST_DRAFT = `
 
 async function listCompanies() {
   const r = await db.query(
-    `SELECT co.*, count(c.id)::int AS contact_count
+    `SELECT co.*,
+            (SELECT count(*) FROM contacts c WHERE c.company_id = co.id)::int AS contact_count,
+            (SELECT count(*) FROM deals d WHERE d.company_id = co.id)::int AS deal_count
      FROM companies co
-     LEFT JOIN contacts c ON c.company_id = co.id
-     GROUP BY co.id
      ORDER BY co.name`
   );
   return r.rows;
@@ -122,7 +122,7 @@ async function deleteContact(id) {
 
 async function listDeals() {
   const r = await db.query(
-    `SELECT d.id, d.score, d.stage, d.source, d.created_at, d.updated_at,
+    `SELECT d.id, d.score, d.stage, d.source, d.campaign_week, d.created_at, d.updated_at,
             c.id AS contact_id, c.name AS contact_name, c.title AS contact_title,
             c.email AS contact_email,
             co.id AS company_id, co.name AS company_name, co.industry,
@@ -138,7 +138,7 @@ async function listDeals() {
 
 async function getDeal(id) {
   const r = await db.query(
-    `SELECT d.id, d.score, d.stage, d.source, d.created_at, d.updated_at,
+    `SELECT d.id, d.score, d.stage, d.source, d.campaign_week, d.created_at, d.updated_at,
             c.id AS contact_id, c.name AS contact_name, c.title AS contact_title,
             c.email AS contact_email, c.phone AS contact_phone,
             c.linkedin_url AS contact_linkedin_url,
@@ -290,11 +290,14 @@ async function setDraftStatus(dealId, status) {
   return r.rows[0] || null;
 }
 
-// Regenerate inserts a NEW draft row (version history preserved).
+// Regenerate inserts a NEW draft row (version history preserved), tagged
+// with the deal's current campaign week.
 async function insertDraft(dealId, { subject, body }) {
   const r = await db.query(
-    `INSERT INTO email_drafts (deal_id, subject, body, status, ai_generated_at)
-     VALUES ($1, $2, $3, 'pending', now()) RETURNING *`,
+    `INSERT INTO email_drafts (deal_id, subject, body, status, ai_generated_at, campaign_week)
+     VALUES ($1, $2, $3, 'pending', now(),
+             (SELECT campaign_week FROM deals WHERE id = $1))
+     RETURNING *`,
     [dealId, subject, body]
   );
   return r.rows[0];

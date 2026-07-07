@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
-import { runBatch } from '../../../../lib/copywriter';
-import { logAgentRun } from '../../../../lib/queries';
+import { runPipeline } from '../../../../lib/pipeline';
 
-// Scheduled pipeline run, invoked by Vercel Cron (see web/vercel.json).
-// Authenticated via CRON_SECRET (Vercel sends it as a Bearer token), not the
-// dashboard session cookie — the middleware lets /api/cron/* through and this
-// check gates it instead.
+// Scheduled pipeline pass, invoked by Vercel Cron (see web/vercel.json):
+// qualify new deals -> week-1 drafts for qualified deals -> campaign
+// follow-ups for contacted deals that are due. Authenticated via CRON_SECRET
+// (Vercel sends it as a Bearer token) — the middleware lets /api/cron/*
+// through and this check gates it instead.
 export const maxDuration = 300;
-
-const BATCH_LIMIT = 10;
 
 export async function GET(request) {
   const auth = request.headers.get('authorization');
@@ -17,20 +15,11 @@ export async function GET(request) {
   }
 
   try {
-    const result = await runBatch(BATCH_LIMIT);
-    const run = await logAgentRun({
-      run_type: 'draft_generation',
-      drafts_created: result.drafted,
-    });
-    console.log(`Cron pipeline run: drafted ${result.drafted}`);
-    return NextResponse.json({ ...result, run });
+    const summary = await runPipeline();
+    console.log('Cron pipeline run:', JSON.stringify(summary));
+    return NextResponse.json(summary);
   } catch (err) {
     console.error('Cron pipeline run failed:', err);
-    await logAgentRun({
-      run_type: 'draft_generation',
-      drafts_created: 0,
-      errors: err.message,
-    }).catch(() => {});
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
