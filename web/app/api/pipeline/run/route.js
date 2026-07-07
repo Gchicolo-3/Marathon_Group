@@ -1,29 +1,16 @@
 import { NextResponse } from 'next/server';
-import { runBatch } from '../../../../lib/copywriter';
-import { logAgentRun } from '../../../../lib/queries';
+import { runPipeline } from '../../../../lib/pipeline';
 
-// Trigger a copywriter batch from the CRM: drafts emails for deals in the
-// 'qualified' stage that have no draft yet, using the same shared
-// draft-generation module as the root pipeline. Logs to agent_runs either way.
+// Manual pipeline pass from the /runs page — same steps as the cron:
+// qualify new deals -> week-1 drafts -> due campaign follow-ups.
 export const maxDuration = 300;
-
-const BATCH_LIMIT = 5; // keep well inside the serverless time budget
 
 export async function POST() {
   try {
-    const result = await runBatch(BATCH_LIMIT);
-    const run = await logAgentRun({
-      run_type: 'draft_generation',
-      drafts_created: result.drafted,
-    });
-    return NextResponse.json({ ...result, run });
+    const summary = await runPipeline();
+    return NextResponse.json(summary);
   } catch (err) {
     console.error('POST /api/pipeline/run failed:', err);
-    await logAgentRun({
-      run_type: 'draft_generation',
-      drafts_created: 0,
-      errors: err.message,
-    }).catch(() => {});
     if (/ANTHROPIC_API_KEY/.test(err.message)) {
       return NextResponse.json(
         { error: 'ANTHROPIC_API_KEY is not configured on the server' },

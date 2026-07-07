@@ -9,6 +9,7 @@ const RUN_TYPE_LABELS = {
   lead_pull: 'Prospector',
   qualification: 'Qualifier',
   draft_generation: 'Copywriter',
+  daily_digest: 'Digest',
 };
 
 function formatDate(iso) {

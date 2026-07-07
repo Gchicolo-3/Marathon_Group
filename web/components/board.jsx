@@ -182,8 +182,13 @@ export function Board({ initialDeals, companies, contacts }) {
                             </div>
                             <ScorePill score={deal.score} />
                           </div>
-                          <div className="mt-3">
+                          <div className="mt-3 flex items-center gap-1.5">
                             <DraftStatusBadge status={deal.draft_status} />
+                            {deal.campaign_week > 1 && (
+                              <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                wk {deal.campaign_week}
+                              </span>
+                            )}
                           </div>
                         </Card>
                       </Link>

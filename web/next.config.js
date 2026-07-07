@@ -4,6 +4,7 @@ const nextConfig = {
   // Vercel's serverless bundles include the files for every route that drafts.
   outputFileTracingIncludes: {
     '/api/deals/[id]/regenerate': ['./lib/skills/**/*'],
+    '/api/deals/[id]/qualify': ['./lib/skills/**/*'],
     '/api/pipeline/run': ['./lib/skills/**/*'],
     '/api/cron/pipeline': ['./lib/skills/**/*'],
   },

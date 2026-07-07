@@ -202,6 +202,17 @@ export default function DealDetailPage() {
       loadDeal();
     });
 
+  const qualify = () =>
+    action('qualify', async () => {
+      const r = await expectOk(
+        await fetch(`/api/deals/${id}/qualify`, { method: 'POST' }),
+        'Failed to qualify'
+      );
+      setFlash({ kind: 'ok', text: `AI scored this deal ${r.score}/10 → ${r.stage}` });
+      loadDeal();
+      loadActivities();
+    });
+
   const changeStage = (stage) =>
     action('stage', async () => {
       await expectOk(
@@ -259,6 +270,11 @@ export default function DealDetailPage() {
             {deal.contact_title} · {deal.company_name}
           </p>
         </div>
+        {(deal.stage === 'new' || deal.score == null) && (
+          <Button variant="outline" onClick={qualify} disabled={!!busy}>
+            {busy === 'qualify' ? <Loader2 className="animate-spin" /> : <Sparkles />} Score with AI
+          </Button>
+        )}
         <StageBadge stage={deal.stage} />
         <select
           value={deal.stage}
@@ -445,7 +461,7 @@ export default function DealDetailPage() {
                     </div>
                   </div>
                   <Separator />
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-3 gap-2 text-sm">
                     <div>
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Score</p>
                       <p className="font-semibold tabular-nums">{deal.score ?? '—'}</p>
@@ -453,6 +469,10 @@ export default function DealDetailPage() {
                     <div>
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">Source</p>
                       <p className="font-semibold">{deal.source || '—'}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">Campaign</p>
+                      <p className="font-semibold">Week {deal.campaign_week ?? 1}</p>
                     </div>
                   </div>
                 </>

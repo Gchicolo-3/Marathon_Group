@@ -17,11 +17,14 @@ export function RunPipelineButton() {
       const res = await fetch('/api/pipeline/run', { method: 'POST' });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || 'Pipeline run failed');
+      const parts = [];
+      if (data.scored) parts.push(`scored ${data.scored} (${data.qualified} qualified)`);
+      if (data.drafted) parts.push(`drafted ${data.drafted} intro${data.drafted === 1 ? '' : 's'}`);
+      if (data.follow_ups) parts.push(`${data.follow_ups} follow-up${data.follow_ups === 1 ? '' : 's'}`);
+      if (data.errors?.length) parts.push(`errors: ${data.errors.join('; ')}`);
       setResult({
-        kind: 'ok',
-        text: data.drafted === 0
-          ? 'Run complete — no qualified deals were waiting for a draft'
-          : `Run complete — drafted ${data.drafted} email${data.drafted === 1 ? '' : 's'}`,
+        kind: data.errors?.length ? 'err' : 'ok',
+        text: parts.length ? `Run complete — ${parts.join(', ')}` : 'Run complete — nothing was due',
       });
       router.refresh();
     } catch (err) {
