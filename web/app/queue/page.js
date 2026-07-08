@@ -25,10 +25,14 @@ export default function QueuePage() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch('/api/deals');
-      if (!res.ok) return setQueue([]);
-      const deals = await res.json();
-      setQueue(deals.filter((d) => d.draft_status === 'pending'));
+      try {
+        const res = await fetch('/api/deals');
+        if (!res.ok) return setQueue([]);
+        const deals = await res.json();
+        setQueue(deals.filter((d) => d.draft_status === 'pending'));
+      } catch {
+        setQueue([]);
+      }
     })();
   }, []);
 
@@ -38,12 +42,16 @@ export default function QueuePage() {
   const loadCurrent = useCallback(async () => {
     if (!current) return;
     setDeal(null);
-    const res = await fetch(`/api/deals/${current.id}`);
-    if (res.ok) {
-      const d = await res.json();
-      setDeal(d);
-      setSubject(d.draft_subject || '');
-      setBody(d.draft_body || '');
+    try {
+      const res = await fetch(`/api/deals/${current.id}`);
+      if (res.ok) {
+        const d = await res.json();
+        setDeal(d);
+        setSubject(d.draft_subject || '');
+        setBody(d.draft_body || '');
+      }
+    } catch {
+      // secondary fetch — never surface a banner over the loaded queue
     }
   }, [current]);
 
@@ -65,7 +73,7 @@ export default function QueuePage() {
     try {
       await fn();
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof TypeError ? 'Connection problem — please try again' : err.message);
     } finally {
       setBusy('');
     }

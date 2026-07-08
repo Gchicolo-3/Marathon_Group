@@ -249,13 +249,112 @@ async function listAgentRuns(limit = 50) {
   return r.rows;
 }
 
-async function logAgentRun({ run_type, prospects_found = 0, drafts_created = 0, errors = null }) {
+async function logAgentRun({ run_type, prospects_found = 0, drafts_created = 0, errors = null, notes = null }) {
+  // The notes column arrives with migration 003 — leave it out of the insert
+  // until it's needed so logging keeps working on a pre-003 database.
+  if (notes == null) {
+    const r = await db.query(
+      `INSERT INTO agent_runs (run_type, prospects_found, drafts_created, errors)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [run_type, prospects_found, drafts_created, errors]
+    );
+    return r.rows[0];
+  }
   const r = await db.query(
-    `INSERT INTO agent_runs (run_type, prospects_found, drafts_created, errors)
-     VALUES ($1, $2, $3, $4) RETURNING *`,
-    [run_type, prospects_found, drafts_created, errors]
+    `INSERT INTO agent_runs (run_type, prospects_found, drafts_created, errors, notes)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [run_type, prospects_found, drafts_created, errors, notes]
   );
   return r.rows[0];
+}
+
+/* ---------------------------- trigger events ---------------------------- */
+// trigger_events and agent_runs.notes ship with migration 003. Reads degrade
+// to empty results on a pre-003 database instead of taking the page down.
+
+async function listTriggerEvents(limit = 100) {
+  try {
+    const r = await db.query(
+      `SELECT t.*, co.name AS company_name
+       FROM trigger_events t
+       LEFT JOIN companies co ON co.id = t.company_id
+       ORDER BY t.created_at DESC, t.id DESC
+       LIMIT $1`,
+      [limit]
+    );
+    return r.rows;
+  } catch (err) {
+    console.error('listTriggerEvents:', err.message);
+    return [];
+  }
+}
+
+/* ---------------------------- activity feed ----------------------------- */
+
+// Cross-deal audit trail: per-deal activities (with who they're about)
+// interleaved with agent runs, newest first. Morning-brief rows are shown in
+// their own homepage panel, not the feed.
+async function listActivityFeed(limit = 100) {
+  const r = await db.query(
+    `SELECT 'activity' AS kind, a.id, a.type::text AS type, a.content AS notes,
+            a.created_at, a.deal_id, c.name AS contact_name, co.name AS company_name,
+            NULL::int AS prospects_found, NULL::int AS drafts_created, NULL::text AS errors
+     FROM activities a
+     JOIN deals d ON d.id = a.deal_id
+     JOIN contacts c ON c.id = d.contact_id
+     JOIN companies co ON co.id = d.company_id
+     UNION ALL
+     SELECT 'agent_run', r.id, r.run_type, NULL, r.created_at, NULL, NULL, NULL,
+            r.prospects_found, r.drafts_created, r.errors
+     FROM agent_runs r
+     WHERE r.run_type <> 'morning_brief'
+     ORDER BY created_at DESC, id DESC
+     LIMIT $1`,
+    [limit]
+  );
+  return r.rows;
+}
+
+/* ----------------------------- morning brief ---------------------------- */
+
+async function getLatestBrief() {
+  try {
+    const r = await db.query(
+      `SELECT notes, created_at FROM agent_runs
+       WHERE run_type = 'morning_brief' AND notes IS NOT NULL
+       ORDER BY created_at DESC, id DESC
+       LIMIT 1`
+    );
+    return r.rows[0] || null;
+  } catch (err) {
+    console.error('getLatestBrief:', err.message);
+    return null;
+  }
+}
+
+/* ---------------------------- pipeline stats ---------------------------- */
+
+// The four homepage stat cards. "Prospects" are deals (one deal per
+// prospect in this CRM); "active sequences" are deals mid-campaign in
+// Contacted; signals fall back to 0 pre-migration-003.
+async function getPipelineStats() {
+  const r = await db.query(
+    `SELECT
+       (SELECT count(*) FROM deals)::int AS total_prospects,
+       (SELECT count(*) FROM deals d
+        WHERE (SELECT e.status FROM email_drafts e WHERE e.deal_id = d.id ORDER BY e.id DESC LIMIT 1) = 'pending')::int AS pending_approval,
+       (SELECT count(*) FROM deals WHERE stage = 'contacted')::int AS active_sequences`
+  );
+  let signals_week = 0;
+  try {
+    const s = await db.query(
+      `SELECT count(*)::int AS n FROM trigger_events WHERE created_at > now() - interval '7 days'`
+    );
+    signals_week = s.rows[0].n;
+  } catch (err) {
+    console.error('getPipelineStats signals:', err.message);
+  }
+  return { ...r.rows[0], signals_week };
 }
 
 /* -------------------------------- drafts ------------------------------- */
@@ -310,5 +409,6 @@ module.exports = {
   listContacts, getContact, createContact, updateContact, deleteContact,
   listDeals, getDeal, createDeal, updateDeal, deleteDeal, setDealStage, getDraftContext,
   logActivity, listActivities, listAgentRuns, logAgentRun,
+  listTriggerEvents, listActivityFeed, getLatestBrief, getPipelineStats,
   getLatestDraft, updateDraft, setDraftStatus, insertDraft,
 };
