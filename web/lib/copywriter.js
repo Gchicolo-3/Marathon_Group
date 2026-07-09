@@ -13,6 +13,13 @@ const Anthropic = require('@anthropic-ai/sdk');
 const CWD_SKILLS = path.join(process.cwd(), 'lib', 'skills');
 const SKILLS_DIR = fs.existsSync(CWD_SKILLS) ? CWD_SKILLS : path.join(__dirname, 'skills');
 
+// Michael's sign-off, injected verbatim into every draft. The model is never
+// allowed to invent the sender's name or contact details.
+const SENDER_SIGNATURE = `Michael Sullivan
+Marathon Group LLC
+201-XXX-XXXX
+marathongroupllc.com`;
+
 function readSkill(name) {
   return fs.readFileSync(path.join(SKILLS_DIR, name), 'utf8');
 }
@@ -59,6 +66,11 @@ ${MISSION}
 
 ${assignment}
 Follow Michael's voice exactly. Short, direct, human, no fluff.
+
+The email is FROM Michael Sullivan of Marathon Group LLC. Do not invent,
+change, or omit the sender's name or contact details.
+Sign the email exactly as follows:
+${SENDER_SIGNATURE}
 
 Prospect:
 Name: ${prospect.first_name} ${prospect.last_name}
@@ -182,4 +194,4 @@ async function runFollowUpBatch(limit = 5) {
   return { success: true, drafted };
 }
 
-module.exports = { draftEmail, runBatch, runFollowUpBatch };
+module.exports = { SENDER_SIGNATURE, draftEmail, runBatch, runFollowUpBatch };

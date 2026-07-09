@@ -10,6 +10,8 @@ const RUN_TYPE_LABELS = {
   qualification: 'Qualifier',
   draft_generation: 'Copywriter',
   daily_digest: 'Digest',
+  news_scan: 'News agent',
+  morning_brief: 'Morning brief',
 };
 
 function formatDate(iso) {

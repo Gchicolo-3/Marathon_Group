@@ -46,19 +46,31 @@ export default function DealDetailPage() {
   const [flash, setFlash] = useState(null); // { kind: 'ok'|'err', text }
   const [loading, setLoading] = useState(true);
 
+  // Background refreshes must never surface an error banner: when they run
+  // alongside a navigation (e.g. the mailto redirect after Send) Safari
+  // aborts them with a bare "Load failed" TypeError even though the page
+  // content is fine. Swallow those — the data on screen just stays as-is.
   const loadDeal = useCallback(async () => {
-    const res = await fetch(`/api/deals/${id}`);
-    if (!res.ok) return null;
-    const data = await res.json();
-    setDeal(data);
-    setSubject(data.draft_subject || '');
-    setBody(data.draft_body || '');
-    return data;
+    try {
+      const res = await fetch(`/api/deals/${id}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      setDeal(data);
+      setSubject(data.draft_subject || '');
+      setBody(data.draft_body || '');
+      return data;
+    } catch {
+      return null;
+    }
   }, [id]);
 
   const loadActivities = useCallback(async () => {
-    const res = await fetch(`/api/deals/${id}/activities`);
-    if (res.ok) setActivities(await res.json());
+    try {
+      const res = await fetch(`/api/deals/${id}/activities`);
+      if (res.ok) setActivities(await res.json());
+    } catch {
+      // keep whatever is already displayed
+    }
   }, [id]);
 
   useEffect(() => {
@@ -71,7 +83,12 @@ export default function DealDetailPage() {
     try {
       await fn();
     } catch (err) {
-      setFlash({ kind: 'err', text: err.message });
+      // Browsers throw a bare TypeError ("Load failed" / "Failed to fetch")
+      // when a request never reached the server — translate it.
+      const text = err instanceof TypeError
+        ? 'Connection problem — please try again'
+        : err.message;
+      setFlash({ kind: 'err', text });
     } finally {
       setBusy('');
     }
@@ -140,8 +157,9 @@ export default function DealDetailPage() {
         'Failed to send'
       );
       setFlash({ kind: 'ok', text: 'Marked as sent — opening your mail client' });
-      loadDeal();
-      loadActivities();
+      // Refresh before the mailto redirect: navigating first would abort
+      // these fetches mid-flight (the "Load failed" banner).
+      await Promise.allSettled([loadDeal(), loadActivities()]);
       window.location.href = data.mailto;
     });
 

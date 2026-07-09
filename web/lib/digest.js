@@ -19,6 +19,33 @@ async function getDigest() {
   return r.rows[0];
 }
 
+// Plain-English morning brief for the dashboard's "Today's Brief" panel.
+// Stored in agent_runs (run_type 'morning_brief', notes column) by the
+// digest cron each weekday morning.
+function composeBrief(d, signalsWeek = 0) {
+  const n = (count, singular, plural) => `${count} ${count === 1 ? singular : plural || `${singular}s`}`;
+  const lines = [];
+
+  lines.push(
+    d.pending_approval > 0
+      ? `${n(d.pending_approval, 'email is', 'emails are')} waiting for your approval in the queue — that's the one thing that needs you today.`
+      : `Nothing is waiting for your approval — the queue is clear.`
+  );
+  lines.push(
+    `In the last 24 hours the system drafted ${n(d.drafted_24h, 'new email')} and ${n(d.sent_24h, 'email')} went out.`
+  );
+  if (d.unscored > 0) {
+    lines.push(`${n(d.unscored, 'new prospect is', 'new prospects are')} waiting to be scored on the next run.`);
+  }
+  if (d.replied_now > 0) {
+    lines.push(`${n(d.replied_now, 'deal is', 'deals are')} sitting in Replied — worth a look.`);
+  }
+  if (signalsWeek > 0) {
+    lines.push(`The news agent flagged ${n(signalsWeek, 'trigger event')} this week — check the Signals tab for openers.`);
+  }
+  return lines.join('\n');
+}
+
 function digestHtml(d, baseUrl) {
   const row = (label, value) =>
     `<tr><td style="padding:6px 12px;color:#64748b">${label}</td>
@@ -65,4 +92,4 @@ async function sendDigestEmail(digest) {
   return 'sent';
 }
 
-module.exports = { getDigest, sendDigestEmail };
+module.exports = { getDigest, composeBrief, sendDigestEmail };

@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "introspect": "node scripts/introspect.js",
-    "migrate": "node scripts/migrate-001-crm.js"
+    "migrate": "node scripts/migrate-001-crm.js",
+    "migrate:campaign": "node scripts/migrate-002-campaign.js",
+    "migrate:signals": "node scripts/migrate-003-signals.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
