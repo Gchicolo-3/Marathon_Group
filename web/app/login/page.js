@@ -47,7 +47,7 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={busy || !password}>
               {busy && <Loader2 className="animate-spin" />} Sign in
             </Button>
-            {error && <p className="text-center text-sm text-red-600">{error}</p>}
+            {error && <p className="text-center text-sm text-red-400">{error}</p>}
           </form>
         </CardContent>
       </Card>

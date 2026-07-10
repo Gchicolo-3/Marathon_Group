@@ -70,8 +70,8 @@ export default async function RunsPage() {
                         className={cn(
                           'inline-flex rounded-full border px-2 py-0.5 text-xs font-medium',
                           r.errors
-                            ? 'border-red-200 bg-red-50 text-red-700'
-                            : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                            ? 'border-red-500/30 bg-red-500/10 text-red-400'
+                            : 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
                         )}
                         title={r.errors || undefined}
                       >

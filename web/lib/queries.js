@@ -126,7 +126,8 @@ async function listDeals() {
             c.id AS contact_id, c.name AS contact_name, c.title AS contact_title,
             c.email AS contact_email,
             co.id AS company_id, co.name AS company_name, co.industry,
-            e.id AS draft_id, e.subject AS draft_subject, e.status AS draft_status
+            e.id AS draft_id, e.subject AS draft_subject, e.status AS draft_status,
+            e.ai_generated_at AS draft_generated_at
      FROM deals d
      JOIN contacts c ON c.id = d.contact_id
      JOIN companies co ON co.id = d.company_id

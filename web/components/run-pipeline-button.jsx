@@ -42,7 +42,7 @@ export function RunPipelineButton() {
         {busy ? 'Drafting emails…' : 'Run copywriter'}
       </Button>
       {result && (
-        <p className={`text-xs ${result.kind === 'ok' ? 'text-emerald-700' : 'text-red-600'}`}>
+        <p className={`text-xs ${result.kind === 'ok' ? 'text-emerald-400' : 'text-red-400'}`}>
           {result.text}
         </p>
       )}

@@ -1,15 +1,22 @@
-# Marathon Group CRM Dashboard (v1)
+# Marathon Group CRM Dashboard
 
 Next.js dashboard over the Marathon pipeline's Neon Postgres database.
+Dark navy "operator's cockpit" theme (IBM Plex Sans/Mono, electric blue
+accents) implemented from the Claude Design handoff.
 
 ## Pages
 
-- `/` — all prospects (name, company, title, score) joined with their latest
-  email draft (subject, status), sorted by qualification score descending.
-- `/prospect/[id]` — full drafted email in editable fields, with
-  **Save draft**, **Approve**, and **Send** buttons. Send is v1: it marks the
-  draft `sent` and opens your mail client via a `mailto:` link with the
-  approved subject/body pre-filled.
+- `/` — dashboard home: Today's Brief (the morning-brief agent's daily
+  write-up), stat cards, pending email drafts with inline **Approve** /
+  **Edit**, recent signals, and the agent-run activity feed.
+- `/pipeline` — kanban board of all deals; drag cards between stages.
+- `/queue` — approval flow for pending drafts (edit → approve / regenerate / skip).
+- `/signals` — trigger events the news agent found (capital projects,
+  funding, expansions, acquisitions, leadership changes).
+- `/activity` — full audit trail: deal activities interleaved with agent runs.
+- `/companies`, `/contacts` — directory CRUD.
+- `/runs` — agent run history + manual pipeline trigger.
+- `/deal/[id]` — full deal detail with draft editor, Approve, and Send.
 
 ## API
 

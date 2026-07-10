@@ -119,7 +119,7 @@ export default function CompanyDetailPage() {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">{error}</div>
+        <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">{error}</div>
       )}
 
       {editing && (
@@ -191,7 +191,7 @@ export default function CompanyDetailPage() {
                 {deals.map((d) => (
                   <li key={d.id} className="flex items-center justify-between gap-2 py-2.5 text-sm">
                     <div className="min-w-0">
-                      <Link href={`/deal/${d.id}`} className="font-medium text-blue-700 hover:underline">
+                      <Link href={`/deal/${d.id}`} className="font-medium text-[#5B8CFF] hover:underline">
                         {d.contact_name}
                       </Link>
                       <p className="text-muted-foreground">score {d.score ?? '—'} · week {d.campaign_week ?? 1}</p>

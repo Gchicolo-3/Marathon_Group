@@ -14,9 +14,9 @@ import { cn } from '../lib/utils';
 function ScorePill({ score }) {
   if (score == null) return <span className="text-xs text-muted-foreground">—</span>;
   const tone =
-    score >= 9 ? 'bg-emerald-100 text-emerald-800'
-    : score >= 6 ? 'bg-blue-100 text-blue-800'
-    : 'bg-slate-100 text-slate-600';
+    score >= 9 ? 'bg-emerald-400/15 text-emerald-300'
+    : score >= 6 ? 'bg-[#5B8CFF]/15 text-[#7FA0F0]'
+    : 'bg-white/5 text-slate-400';
   return (
     <span className={cn('inline-flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-bold tabular-nums', tone)}>
       {score}
@@ -108,7 +108,7 @@ export function Board({ initialDeals, companies, contacts }) {
       </div>
 
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+        <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-400">
           {error}
         </div>
       )}
@@ -144,8 +144,8 @@ export function Board({ initialDeals, companies, contacts }) {
                 className={cn(
                   'flex min-h-[140px] flex-1 flex-col gap-2.5 rounded-lg p-2.5 transition-colors',
                   overStage === stage && dragId != null
-                    ? 'bg-blue-50 ring-2 ring-blue-300'
-                    : 'bg-slate-100/70'
+                    ? 'bg-[#5B8CFF]/10 ring-2 ring-[#5B8CFF]/40'
+                    : 'bg-white/[0.03]'
                 )}
               >
                 {items.length === 0 ? (
@@ -169,7 +169,7 @@ export function Board({ initialDeals, companies, contacts }) {
                       className={cn('cursor-grab active:cursor-grabbing', dragId === deal.id && 'opacity-50')}
                     >
                       <Link href={`/deal/${deal.id}`} draggable={false} className="block">
-                        <Card className="p-3.5 transition-shadow hover:shadow-md">
+                        <Card className="p-3.5 transition-colors hover:border-white/20">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold">{deal.company_name}</p>

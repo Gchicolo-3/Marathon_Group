@@ -1,98 +1,78 @@
-import Link from 'next/link';
-import { FileText, Send, MessageCircle, Sparkles, Sunrise, Users, Inbox, Repeat, Radar } from 'lucide-react';
-import { listDeals, listCompanies, listContacts, getLatestBrief, getPipelineStats } from '../lib/queries';
-import { getDigest } from '../lib/digest';
-import { Card, CardContent } from '../components/ui/card';
-import { Board } from '../components/board';
+import {
+  listDeals,
+  listTriggerEvents,
+  listAgentRuns,
+  getLatestBrief,
+  getPipelineStats,
+} from '../lib/queries';
+import { Dashboard } from '../components/dashboard';
 
 export const dynamic = 'force-dynamic';
 
-function Stat({ icon: Icon, label, value, href }) {
-  const inner = (
-    <div className="flex items-center gap-2.5 rounded-lg border bg-card px-3.5 py-2 shadow-sm transition-shadow hover:shadow">
-      <Icon className="h-4 w-4 text-muted-foreground" />
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-sm font-bold tabular-nums">{value}</span>
-    </div>
-  );
-  return href ? <Link href={href}>{inner}</Link> : inner;
-}
-
-function StatCard({ icon: Icon, label, value, href }) {
-  const inner = (
-    <Card className="transition-shadow hover:shadow-md">
-      <CardContent className="flex items-center gap-3.5 p-4">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-          <Icon className="h-5 w-5 text-blue-600" />
-        </span>
-        <div>
-          <p className="text-2xl font-bold leading-tight tabular-nums">{value}</p>
-          <p className="text-sm text-muted-foreground">{label}</p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-  return href ? <Link href={href}>{inner}</Link> : inner;
-}
-
-function briefDateLabel(iso) {
-  return new Date(iso).toLocaleDateString('en-US', {
-    weekday: 'long', month: 'long', day: 'numeric',
+function briefDateLine(iso) {
+  const d = new Date(iso);
+  const date = d.toLocaleDateString('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Chicago',
   });
+  const time = d.toLocaleTimeString('en-US', {
+    hour: 'numeric', minute: '2-digit', timeZone: 'America/Chicago',
+  });
+  return `${date} · generated ${time}`;
 }
 
-export default async function PipelinePage() {
-  const [deals, companies, contacts, digest, brief, stats] = await Promise.all([
+export default async function HomePage() {
+  const [deals, signals, runs, brief, stats] = await Promise.all([
     listDeals(),
-    listCompanies(),
-    listContacts(),
-    getDigest(),
+    listTriggerEvents(5),
+    listAgentRuns(6),
     getLatestBrief(),
     getPipelineStats(),
   ]);
 
+  // Deals whose latest draft still needs a human — highest score first
+  // (listDeals already sorts that way).
+  const drafts = deals
+    .filter((d) => d.draft_status === 'pending')
+    .map((d) => ({
+      id: d.id,
+      name: d.contact_name,
+      title: d.contact_title,
+      company: d.company_name,
+      subject: d.draft_subject,
+      generatedAt: d.draft_generated_at,
+    }));
+
   return (
-    <>
-      <Card className="mb-5">
-        <CardContent className="p-5">
-          <div className="flex items-center gap-2.5">
-            <Sunrise className="h-5 w-5 text-amber-500" />
-            <h2 className="text-base font-semibold">Today&apos;s Brief</h2>
-            {brief && (
-              <span className="ml-auto text-xs text-muted-foreground">
-                {briefDateLabel(brief.created_at)}
-              </span>
-            )}
-          </div>
-          {brief ? (
-            <div className="mt-3 space-y-1.5">
-              {brief.notes.split('\n').filter(Boolean).map((line, i) => (
-                <p key={i} className="text-sm leading-relaxed">{line}</p>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-3 text-sm text-muted-foreground">
-              No brief generated yet — pipeline runs at 7am ET.
-            </p>
+    <div className="mx-auto flex max-w-[1240px] flex-col gap-7 px-0 pb-12 pt-3 lg:px-4">
+      {/* Today's Brief — written by the morning-brief agent (agent_runs.notes) */}
+      <section className="rounded-[14px] border border-[#5B8CFF]/[0.22] bg-gradient-to-b from-[#2E63E8]/10 to-[#2E63E8]/[0.03] px-[30px] py-[26px]">
+        <div className="mb-3.5 flex items-center gap-2.5">
+          <span className="inline-block h-2 w-2 animate-[mgPulse_2.4s_ease-in-out_infinite] rounded-full bg-[#5B8CFF]" />
+          <span className="font-mono text-[11px] uppercase tracking-[0.16em] text-[#7FA0F0]">
+            Today&apos;s Brief
+          </span>
+          {brief && (
+            <span className="ml-auto font-mono text-[11px] text-[#5F6B85]">
+              {briefDateLine(brief.created_at)}
+            </span>
           )}
-        </CardContent>
-      </Card>
+        </div>
+        {brief ? (
+          <div className="flex max-w-[920px] flex-col gap-2">
+            {brief.notes.split('\n').filter(Boolean).map((line, i) => (
+              <p key={i} className="m-0 text-[15.5px] leading-[1.65] text-[#C9D4E8]">
+                {line}
+              </p>
+            ))}
+          </div>
+        ) : (
+          <p className="m-0 text-[15.5px] leading-[1.65] text-[#C9D4E8]">
+            No brief generated yet — the pipeline writes one each weekday morning (7 AM ET).
+          </p>
+        )}
+      </section>
 
-      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <StatCard icon={Users} label="Prospects in system" value={stats.total_prospects} />
-        <StatCard icon={Inbox} label="Emails pending approval" value={stats.pending_approval} href="/queue" />
-        <StatCard icon={Repeat} label="Active sequences" value={stats.active_sequences} />
-        <StatCard icon={Radar} label="Signals this week" value={stats.signals_week} href="/signals" />
-      </div>
-
-      <div className="mb-5 flex flex-wrap gap-2.5">
-        <Stat icon={Sparkles} label="Awaiting scoring" value={digest.unscored} />
-        <Stat icon={FileText} label="Drafted (24h)" value={digest.drafted_24h} />
-        <Stat icon={Send} label="Sent (24h)" value={digest.sent_24h} />
-        <Stat icon={MessageCircle} label="In Replied" value={digest.replied_now} />
-      </div>
-
-      <Board initialDeals={deals} companies={companies} contacts={contacts} />
-    </>
+      <Dashboard initialDrafts={drafts} signals={signals} runs={runs} stats={stats} />
+    </div>
   );
 }

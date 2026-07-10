@@ -102,7 +102,7 @@ export default function ContactsPage() {
                     <td className="px-4 py-2.5 font-medium">{c.name}</td>
                     <td className="px-4 py-2.5 text-muted-foreground">{c.title || '—'}</td>
                     <td className="px-4 py-2.5">
-                      <Link href={`/companies/${c.company_id}`} className="text-blue-700 hover:underline">
+                      <Link href={`/companies/${c.company_id}`} className="text-[#5B8CFF] hover:underline">
                         {c.company_name}
                       </Link>
                     </td>
@@ -132,7 +132,7 @@ export default function ContactsPage() {
           <Input placeholder="Name" value={form.name} onChange={(e) => setForm((s) => ({ ...s, name: e.target.value }))} />
           <Input placeholder="Title" value={form.title} onChange={(e) => setForm((s) => ({ ...s, title: e.target.value }))} />
           <Input placeholder="Email" type="email" value={form.email} onChange={(e) => setForm((s) => ({ ...s, email: e.target.value }))} />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancel</Button>
             <Button type="submit" disabled={busy || !form.name.trim() || !form.company_id}>
