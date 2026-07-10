@@ -311,8 +311,8 @@ export default function DealDetailPage() {
           className={cn(
             'mb-4 rounded-md border px-3.5 py-2.5 text-sm',
             flash.kind === 'ok'
-              ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
-              : 'border-red-200 bg-red-50 text-red-700'
+              ? 'border-emerald-400/30 bg-emerald-400/10 text-emerald-300'
+              : 'border-red-500/30 bg-red-500/10 text-red-400'
           )}
         >
           {flash.text}
@@ -451,7 +451,7 @@ export default function DealDetailPage() {
                       <p className="font-medium">{deal.contact_name}</p>
                       <p className="text-muted-foreground">{deal.contact_title || '—'}</p>
                       {deal.contact_email ? (
-                        <a href={`mailto:${deal.contact_email}`} className="text-blue-600 hover:underline">
+                        <a href={`mailto:${deal.contact_email}`} className="text-[#5B8CFF] hover:underline">
                           {deal.contact_email}
                         </a>
                       ) : (
@@ -463,7 +463,7 @@ export default function DealDetailPage() {
                           href={deal.contact_linkedin_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="block truncate text-blue-600 hover:underline"
+                          className="block truncate text-[#5B8CFF] hover:underline"
                         >
                           LinkedIn profile
                         </a>

@@ -2,26 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Dark navy "operator's cockpit" palette from the Claude Design handoff:
+   bg #080D1A · card #0E1526 · chip #1A2338 · electric blue #2E63E8/#5B8CFF
+   text #E7ECF5 · muted #7C89A6 · faint mono #5F6B85 */
 @layer base {
   :root {
-    --background: 220 20% 97%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --primary: 222 47% 11%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-    --accent: 210 40% 94%;
-    --accent-foreground: 222 47% 11%;
-    --destructive: 0 84% 60%;
+    --background: 223 53% 7%;        /* #080D1A */
+    --foreground: 219 41% 93%;       /* #E7ECF5 */
+    --card: 223 46% 10%;             /* #0E1526 */
+    --card-foreground: 219 41% 93%;
+    --primary: 223 80% 55%;          /* #2E63E8 */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 37% 16%;        /* #1A2338 */
+    --secondary-foreground: 219 41% 93%;
+    --muted: 222 37% 16%;
+    --muted-foreground: 221 19% 57%; /* #7C89A6 */
+    --accent: 222 30% 13%;           /* hover wash ≈ 5% white over card */
+    --accent-foreground: 219 41% 93%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
-    --radius: 0.5rem;
+    --border: 222 26% 16%;           /* ≈ rgba(255,255,255,0.07) over card */
+    --input: 222 26% 20%;
+    --ring: 223 80% 55%;
+    --radius: 0.65rem;
   }
 
   * {
@@ -31,4 +34,13 @@
   body {
     @apply bg-background text-foreground antialiased;
   }
+
+  ::selection {
+    background: rgba(91, 140, 255, 0.35);
+  }
+}
+
+@keyframes mgPulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(91, 140, 255, 0.45); }
+  50%      { opacity: 0.75; box-shadow: 0 0 0 6px rgba(91, 140, 255, 0); }
 }

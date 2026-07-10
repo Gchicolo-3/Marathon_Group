@@ -92,7 +92,7 @@ export default function CompaniesPage() {
                 {filtered.map((c) => (
                   <tr key={c.id} className="border-b transition-colors last:border-0 hover:bg-muted/30">
                     <td className="px-4 py-2.5">
-                      <Link href={`/companies/${c.id}`} className="font-medium text-blue-700 hover:underline">
+                      <Link href={`/companies/${c.id}`} className="font-medium text-[#5B8CFF] hover:underline">
                         {c.name}
                       </Link>
                     </td>
@@ -113,7 +113,7 @@ export default function CompaniesPage() {
         <form onSubmit={addCompany} className="space-y-3">
           <Input placeholder="Company name" value={name} onChange={(e) => setName(e.target.value)} autoFocus />
           <Input placeholder="Industry (optional)" value={industry} onChange={(e) => setIndustry(e.target.value)} />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-red-400">{error}</p>}
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={busy}>Cancel</Button>
             <Button type="submit" disabled={busy || !name.trim()}>

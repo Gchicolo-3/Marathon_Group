@@ -21,6 +21,7 @@ const TYPE_META = {
   draft_generation: { label: 'Copywriter run',  icon: FileText },
   daily_digest:     { label: 'Daily digest',    icon: Mail },
   news_scan:        { label: 'News scan',       icon: Newspaper },
+  morning_brief:    { label: 'Morning brief',   icon: Mail },
 };
 
 function formatDate(iso) {
@@ -76,10 +77,10 @@ export default async function ActivityPage() {
                     <span
                       className={cn(
                         'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
-                        isRun ? 'bg-blue-50' : 'bg-secondary'
+                        isRun ? 'bg-[#5B8CFF]/15' : 'bg-secondary'
                       )}
                     >
-                      <Icon className={cn('h-3.5 w-3.5', isRun ? 'text-blue-600' : 'text-muted-foreground')} />
+                      <Icon className={cn('h-3.5 w-3.5', isRun ? 'text-[#7FA0F0]' : 'text-muted-foreground')} />
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2">
@@ -87,7 +88,7 @@ export default async function ActivityPage() {
                         {entry.contact_name && (
                           <Link
                             href={`/deal/${entry.deal_id}`}
-                            className="truncate text-sm text-blue-600 hover:underline"
+                            className="truncate text-sm text-[#5B8CFF] hover:underline"
                           >
                             {entry.contact_name}
                             {entry.company_name ? ` · ${entry.company_name}` : ''}

@@ -179,7 +179,7 @@ export function NewDealDialog({ open, onClose, companies, contacts, onCreated })
           </Field>
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-red-400">{error}</p>}
 
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="outline" onClick={onClose} disabled={busy}>Cancel</Button>
