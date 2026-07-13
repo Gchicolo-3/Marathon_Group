@@ -41,7 +41,7 @@ export default function RootLayout({ children }) {
           <div className="ml-auto flex items-center gap-4">
             <HeaderClock />
             <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-white/10 bg-[#1A2338] text-[11px] font-semibold text-[#9DB4E8]">
-              GC
+              MS
             </div>
           </div>
         </header>
