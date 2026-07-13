@@ -292,23 +292,32 @@ async function listTriggerEvents(limit = 100) {
 
 /* ---------------------------- activity feed ----------------------------- */
 
-// Cross-deal audit trail: per-deal activities (with who they're about)
-// interleaved with agent runs, newest first. Morning-brief rows are shown in
-// their own homepage panel, not the feed.
+// Cross-deal audit trail: per-deal activities (with who they're about),
+// agent runs, and individual signals interleaved, newest first. Signals
+// appear as their own entries (with a clickable source), so successful
+// news-scan runs are folded into them — only FAILED news scans surface as
+// run rows. Morning-brief rows live in their own homepage panel.
 async function listActivityFeed(limit = 100) {
   const r = await db.query(
     `SELECT 'activity' AS kind, a.id, a.type::text AS type, a.content AS notes,
             a.created_at, a.deal_id, c.name AS contact_name, co.name AS company_name,
-            NULL::int AS prospects_found, NULL::int AS drafts_created, NULL::text AS errors
+            NULL::int AS prospects_found, NULL::int AS drafts_created, NULL::text AS errors,
+            NULL::text AS source_url
      FROM activities a
      JOIN deals d ON d.id = a.deal_id
      JOIN contacts c ON c.id = d.contact_id
      JOIN companies co ON co.id = d.company_id
      UNION ALL
      SELECT 'agent_run', r.id, r.run_type, NULL, r.created_at, NULL, NULL, NULL,
-            r.prospects_found, r.drafts_created, r.errors
+            r.prospects_found, r.drafts_created, r.errors, NULL
      FROM agent_runs r
      WHERE r.run_type <> 'morning_brief'
+       AND NOT (r.run_type = 'news_scan' AND r.errors IS NULL)
+     UNION ALL
+     SELECT 'signal', t.id, t.event_type, t.description, t.created_at, NULL, NULL,
+            COALESCE(co.name, t.organization), NULL, NULL, NULL, t.source_url
+     FROM trigger_events t
+     LEFT JOIN companies co ON co.id = t.company_id
      ORDER BY created_at DESC, id DESC
      LIMIT $1`,
     [limit]

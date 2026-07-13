@@ -14,11 +14,59 @@ const CWD_SKILLS = path.join(process.cwd(), 'lib', 'skills');
 const SKILLS_DIR = fs.existsSync(CWD_SKILLS) ? CWD_SKILLS : path.join(__dirname, 'skills');
 
 // Michael's sign-off, injected verbatim into every draft. The model is never
-// allowed to invent the sender's name or contact details.
+// allowed to invent the sender's name or contact details. Set SENDER_PHONE
+// (and optionally SENDER_WEBSITE) in the environment — the fallback is a
+// placeholder that must never reach a real prospect.
 const SENDER_SIGNATURE = `Michael Sullivan
 Marathon Group LLC
-201-XXX-XXXX
-marathongroupllc.com`;
+${process.env.SENDER_PHONE || '201-XXX-XXXX'}
+${process.env.SENDER_WEBSITE || 'marathongroupllc.com'}`;
+
+// Phrases VOICE.md explicitly bans. A draft containing any of them fails
+// review and is redrafted once with the failure reasons in the prompt.
+const BANNED_PHRASES = [
+  'i hope this email finds you well',
+  'i wanted to reach out',
+  'i came across your profile',
+  'synergy',
+  'leverage',
+  'robust',
+  'innovative solutions',
+  'looking forward to connecting',
+];
+
+// Deterministic voice/quality review — the checks that don't need a model:
+// banned phrases, personalization, signature integrity, subject, and length.
+function reviewDraft({ subject, body }, prospect) {
+  const issues = [];
+  const lower = (body || '').toLowerCase();
+
+  for (const phrase of BANNED_PHRASES) {
+    if (lower.includes(phrase)) issues.push(`uses the banned phrase "${phrase}"`);
+  }
+
+  if (!subject || !subject.trim()) issues.push('subject line is empty');
+  else if (subject.length > 90) issues.push('subject line is longer than 90 characters');
+
+  const firstName = (prospect.first_name || '').trim();
+  if (firstName) {
+    const opening = (body || '').split('\n').slice(0, 2).join(' ');
+    if (!opening.includes(firstName)) {
+      issues.push(`does not address ${firstName} by first name in the opening line`);
+    }
+  }
+
+  if (!(body || '').includes('Michael Sullivan')) {
+    issues.push('is missing the Michael Sullivan signature block');
+  }
+
+  const words = (body || '').trim().split(/\s+/).length;
+  if (words > 170) {
+    issues.push(`is too long (${words} words) — VOICE.md caps outreach at four to six sentences plus signature`);
+  }
+
+  return issues;
+}
 
 function readSkill(name) {
   return fs.readFileSync(path.join(SKILLS_DIR, name), 'utf8');
@@ -53,7 +101,7 @@ track topics that match the prospect's industry. This is a follow-up — they
 have not replied yet, so bring a fresh hook, never reference or apologize for
 earlier emails, and keep the ask low-pressure.`;
 
-  const prompt = `You are the copywriter agent for Marathon Group LLC.
+  const basePrompt = `You are the copywriter agent for Marathon Group LLC.
 
 Here is Michael's voice guide:
 ${VOICE}
@@ -66,6 +114,10 @@ ${MISSION}
 
 ${assignment}
 Follow Michael's voice exactly. Short, direct, human, no fluff.
+
+Open the email by addressing the prospect by their first name — e.g.
+"${prospect.first_name} —" or "Hi ${prospect.first_name}," — never a generic
+greeting and never their full name.
 
 The email is FROM Michael Sullivan of Marathon Group LLC. Do not invent,
 change, or omit the sender's name or contact details.
@@ -86,15 +138,32 @@ Return ONLY valid JSON with no extra text:
   "body": "full email body text"
 }`;
 
-  const response = await getClient().messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 1000,
-    messages: [{ role: 'user', content: prompt }],
-  });
+  const generate = async (prompt) => {
+    const response = await getClient().messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }],
+    });
+    const text = response.content[0].text;
+    return JSON.parse(text.replace(/```json|```/g, '').trim());
+  };
 
-  const text = response.content[0].text;
-  const clean = text.replace(/```json|```/g, '').trim();
-  return JSON.parse(clean);
+  // Draft, review against the voice guide, and redraft once if it fails —
+  // the second attempt sees exactly what was wrong with the first.
+  let draft = await generate(basePrompt);
+  const issues = reviewDraft(draft, prospect);
+  if (issues.length > 0) {
+    draft = await generate(
+      `${basePrompt}
+
+A previous attempt at this email failed Marathon Group's quality review for
+these reasons:
+${issues.map((i) => `- ${i}`).join('\n')}
+
+Write a fresh version that fixes every one of these problems.`
+    );
+  }
+  return draft;
 }
 
 // Batch run: draft emails for every deal in stage 'qualified' that has no
@@ -194,4 +263,4 @@ async function runFollowUpBatch(limit = 5) {
   return { success: true, drafted };
 }
 
-module.exports = { SENDER_SIGNATURE, draftEmail, runBatch, runFollowUpBatch };
+module.exports = { SENDER_SIGNATURE, draftEmail, reviewDraft, runBatch, runFollowUpBatch };
