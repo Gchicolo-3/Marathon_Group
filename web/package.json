@@ -10,7 +10,8 @@
     "migrate": "node scripts/migrate-001-crm.js",
     "migrate:campaign": "node scripts/migrate-002-campaign.js",
     "migrate:signals": "node scripts/migrate-003-signals.js",
-    "migrate:repair": "node scripts/migrate-004-repair-triggers.js"
+    "migrate:repair": "node scripts/migrate-004-repair-triggers.js",
+    "drafts:regenerate": "node scripts/regenerate-pending.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
