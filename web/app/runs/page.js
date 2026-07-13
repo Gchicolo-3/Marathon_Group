@@ -1,6 +1,7 @@
 import { listAgentRuns } from '../../lib/queries';
 import { Card, CardContent } from '../../components/ui/card';
 import { RunPipelineButton } from '../../components/run-pipeline-button';
+import { RegenerateDraftsButton } from '../../components/regenerate-drafts-button';
 import { cn } from '../../lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,10 @@ export default async function RunsPage() {
             without one. The button triggers an extra run manually.
           </p>
         </div>
-        <RunPipelineButton />
+        <div className="flex flex-col items-end gap-2">
+          <RunPipelineButton />
+          <RegenerateDraftsButton />
+        </div>
       </div>
 
       <Card>

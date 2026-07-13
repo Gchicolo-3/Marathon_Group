@@ -60,6 +60,10 @@ function reviewDraft({ subject, body }, prospect) {
     issues.push('is missing the Michael Sullivan signature block');
   }
 
+  if (process.env.SENDER_PHONE && !(body || '').includes(process.env.SENDER_PHONE)) {
+    issues.push('signature is missing the configured phone number');
+  }
+
   const words = (body || '').trim().split(/\s+/).length;
   if (words > 170) {
     issues.push(`is too long (${words} words) — VOICE.md caps outreach at four to six sentences plus signature`);

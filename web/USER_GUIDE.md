@@ -89,5 +89,7 @@ accumulate in the queue.
   digest. Env changes take effect on the next deploy.
 - Migrations: `npm run migrate`, `migrate:campaign`, `migrate:signals`,
   `migrate:repair` (all idempotent).
-- `npm run drafts:regenerate` — one-shot refresh of all pending drafts after
-  a voice/signature change.
+- **Review & refresh drafts** (button on the Runs page) re-checks every
+  pending draft against the voice guide and rewrites only the failures —
+  use it after any voice/signature change. `npm run drafts:regenerate` is
+  the CLI twin.
