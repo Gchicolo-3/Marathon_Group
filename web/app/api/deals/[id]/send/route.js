@@ -1,8 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getDeal, setDraftStatus, logActivity } from '../../../../../lib/queries';
+import { getDeal, setDraftStatus, logActivity, setDealStage } from '../../../../../lib/queries';
+import { passesGate } from '../../../../../lib/enrich';
+import db from '../../../../../lib/db';
+import { getAccount, sendEmail } from '../../../../../lib/gmail';
 
-// v1 send: mark the latest draft sent, log an email_sent activity, and hand
-// the client a mailto: link with the approved subject/body pre-filled.
+// Send. With Gmail connected the email goes out from the connected mailbox
+// and the deal moves to contacted. Without it, falls back to the v1 behavior:
+// mark sent and hand the client a mailto: link. Either way the verified
+// email gate applies, so nothing goes to an unverified address.
 export async function POST(request, { params }) {
   const { id } = await params;
   try {
@@ -12,6 +17,30 @@ export async function POST(request, { params }) {
     }
     if (deal.draft_status !== 'approved') {
       return NextResponse.json({ error: 'Draft must be approved before sending' }, { status: 409 });
+    }
+
+    if (!passesGate(deal.contact_email_status)) {
+      return NextResponse.json(
+        { error: 'Email is not verified yet.', code: 'EMAIL_NOT_VERIFIED' },
+        { status: 409 }
+      );
+    }
+    if (!deal.contact_email) {
+      return NextResponse.json({ error: 'This contact has no email address' }, { status: 409 });
+    }
+
+    let account = null;
+    try { account = await getAccount(); } catch { account = null; }
+    if (account) {
+      const sent = await sendEmail({ to: deal.contact_email, subject: deal.draft_subject, body: deal.draft_body });
+      const draft = await setDraftStatus(id, 'sent');
+      await db.query(
+        `UPDATE deals SET gmail_thread_id = $2, gmail_message_id = $3, gmail_last_ms = $4, sent_via = 'gmail', updated_at = now() WHERE id = $1`,
+        [id, sent.threadId, sent.id, Date.now()]
+      );
+      await logActivity(id, 'email_sent', `Email sent from ${sent.from}: "${draft.subject}"`);
+      if (deal.stage === 'qualified' || deal.stage === 'new') await setDealStage(id, 'contacted');
+      return NextResponse.json({ ...draft, sent_via: 'gmail', from: sent.from });
     }
 
     const draft = await setDraftStatus(id, 'sent');

@@ -3,11 +3,12 @@ import db from '../../../../lib/db';
 
 export const maxDuration = 60;
 
-// Runs migration 005 (additive, idempotent). Behind the dashboard login.
+// Runs migrations 005 and 006 (additive, idempotent). Behind the dashboard login.
 export async function POST() {
   try {
-    const { run } = require('../../../../lib/migrations/005-enrichment');
-    const result = await run(db);
+    const m5 = require('../../../../lib/migrations/005-enrichment');
+    const m6 = require('../../../../lib/migrations/006-gmail');
+    const result = { ...(await m5.run(db)), ...(await m6.run(db)) };
     return NextResponse.json({ ok: true, result });
   } catch (err) {
     console.error('admin migrate failed:', err);
