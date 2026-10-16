@@ -1,6 +1,7 @@
 import { listAgentRuns } from '../../lib/queries';
 import { Card, CardContent } from '../../components/ui/card';
 import { RunPipelineButton } from '../../components/run-pipeline-button';
+import { AdminTools } from '../../components/admin-tools';
 import { cn } from '../../lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +12,7 @@ const RUN_TYPE_LABELS = {
   draft_generation: 'Copywriter',
   daily_digest: 'Digest',
   news_scan: 'News agent',
+  enrichment: 'Verifier',
   morning_brief: 'Morning brief',
 };
 
@@ -36,6 +38,8 @@ export default async function RunsPage() {
         </div>
         <RunPipelineButton />
       </div>
+
+      <AdminTools />
 
       <Card>
         <CardContent className="p-0">
