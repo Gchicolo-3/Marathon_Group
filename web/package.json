@@ -11,7 +11,11 @@
     "migrate:campaign": "node scripts/migrate-002-campaign.js",
     "migrate:signals": "node scripts/migrate-003-signals.js",
     "migrate:repair": "node scripts/migrate-004-repair-triggers.js",
-    "drafts:regenerate": "node scripts/regenerate-pending.js"
+    "drafts:regenerate": "node scripts/regenerate-pending.js",
+    "migrate:enrichment": "node scripts/migrate-005-enrichment.js",
+    "enrich:backfill": "node scripts/enrich-backfill.js",
+    "deals:rescore": "node scripts/rescore-deals.js",
+    "probe:vibe": "node scripts/probe-vibe.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

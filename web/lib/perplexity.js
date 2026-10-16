@@ -11,7 +11,7 @@ function isConfigured() {
 // Sends one user prompt to Perplexity and returns the raw answer text
 // (grounded in live web search results). Throws with a clear message when
 // the key is missing so pipeline steps can log/skip cleanly.
-async function search(prompt, { model = DEFAULT_MODEL, maxTokens = 2000 } = {}) {
+async function searchWithCitations(prompt, { model = DEFAULT_MODEL, maxTokens = 2000 } = {}) {
   const key = process.env.PERPLEXITY_API_KEY;
   if (!key) {
     throw new Error('PERPLEXITY_API_KEY is not set');
@@ -40,7 +40,18 @@ async function search(prompt, { model = DEFAULT_MODEL, maxTokens = 2000 } = {}) 
   if (!text) {
     throw new Error('Perplexity API returned an empty response');
   }
-  return text;
+  // Perplexity returns the URLs it actually read. Callers that need a real
+  // source (the news agent) must pick from these and never invent one.
+  const citations = Array.isArray(data.citations)
+    ? data.citations
+    : Array.isArray(data.search_results)
+      ? data.search_results.map((r) => r.url).filter(Boolean)
+      : [];
+  return { text, citations };
 }
 
-module.exports = { search, isConfigured };
+async function search(prompt, opts) {
+  return (await searchWithCitations(prompt, opts)).text;
+}
+
+module.exports = { search, searchWithCitations, isConfigured };

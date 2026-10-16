@@ -11,6 +11,7 @@ const AGENT_LABELS = {
   qualification: 'Qualifier',
   draft_generation: 'Draft Writer',
   news_scan: 'Signal Scanner',
+  enrichment: 'Verifier',
   daily_digest: 'Daily Digest',
   morning_brief: 'Morning Brief',
 };
