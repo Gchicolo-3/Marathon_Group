@@ -1,38 +1,51 @@
 # Marathon Group LLC - Ideal Client Profile
 
-## Primary Verticals
-1. Healthcare: Private hospital systems, health networks, medical centers
-2. Education: Private universities, independent schools, religious institutions
+Source: Mike Sullivan's pipeline questionnaire, Sept 15 2026.
 
-## NOT a Fit
-- Public schools (procurement process too complex)
-- Small medical practices
-- Single-asset retail or residential owners
+## The Three Segments (in priority order)
+1. Small to mid size medical and health providers (primary)
+2. Universities (secondary)
+3. Mid size private companies that are growing (secondary)
 
-## Perfect Client - Healthcare
-Title: VP of Facilities, Director of Capital Projects, SVP Real Estate, COO, CFO
-Company: Regional hospital systems, multi-site health networks, academic medical centers
-Size: 500+ employees, multiple locations
-Geography: New Jersey, New York, Connecticut, Pennsylvania
-Situation: Capital projects in queue but no dedicated owner's rep on staff
+## Geography
+New Jersey and New York only. Out of state work is open when the engagement
+is mostly remote with occasional site visits, but it is not the current
+focus, so out of state organizations do not qualify.
 
-## Perfect Client - Education
-Title: VP of Facilities, Director of Campus Operations, CFO, President
-Company: Private universities, independent K-12 schools, religious institutions
-Size: Regional institutions with physical campuses
-Geography: Tri-state area primarily
-Situation: Capital improvement, renovation, or expansion project needing outside PM
+## The Four Gates (a target must pass ALL FOUR)
+1. Segment: the organization is in one of the three segments above
+2. Geography: New Jersey or New York
+3. Signal: a sourced trigger event in the last 90 days (a real article or
+   public record with a URL, never an inference)
+4. Title: a title that hires an owner's rep
 
-## High Priority Trigger Events
+## Titles That Hire an Owner's Rep
+VP of Facilities, Director of Facilities, Director of Capital Projects,
+Director of Campus Operations, SVP Real Estate, VP Real Estate, COO, CFO.
+At smaller organizations the President, CEO or Administrator can be the
+decision maker.
+
+## Trigger Events That Matter
+- Growth, expansion or a new facility
+- Relocation
 - New capital project announced
 - Bond or funding approval
-- Facility expansion news
 - New campus or building acquisition
-- Leadership change in facilities or operations
+- Leadership change in facilities, real estate, operations or finance
 - RFP posted publicly for construction or PM services
 
-## Disqualifiers
-- Already have a full in-house PM team
-- Project under $500K
-- Public institution requiring government procurement
-- Outside tri-state area unless remote owner's rep role
+The trigger event is also how the right decision maker is identified: the
+person closest to the project named in the signal.
+
+## NOT a Fit
+- Public schools and public institutions with government procurement
+- Single practice offices and solo practitioners
+- Single asset retail or residential owners
+- Organizations that already run a full in house PM team
+- Projects under $500K
+- Anything outside New Jersey and New York
+
+## Why Relevance Matters
+Mike deletes unsolicited emails about topics he has no interest in, and so
+does everyone he writes to. The failure mode to avoid is irrelevance, not
+tone. When the signal is thin, do not write the email.

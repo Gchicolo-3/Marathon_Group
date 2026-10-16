@@ -91,8 +91,9 @@ export function Dashboard({ initialDrafts, signals, runs, stats }) {
     setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, approved: true } : d)));
     const res = await fetch(`/api/deals/${id}/approve`, { method: 'POST' });
     if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
       setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, approved: false } : d)));
-      setError('Failed to approve draft — change was reverted');
+      setError(data.error || 'Failed to approve draft — change was reverted');
     }
   }
 
@@ -132,6 +133,38 @@ export function Dashboard({ initialDrafts, signals, runs, stats }) {
         {statCards.map((s) => (
           <StatCard key={s.label} {...s} />
         ))}
+      </section>
+
+      {/* Verification, replies, and the billing trigger */}
+      <section className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <StatCard
+          label="Verified Contacts"
+          value={stats.verified_contacts}
+          delta={`of ${stats.contacts_total}`}
+          deltaClass="text-muted-foreground"
+        />
+        <StatCard
+          label="Lookups This Month"
+          value={stats.lookups_month}
+          delta="of 300 included"
+          deltaClass={stats.lookups_month > 300 ? 'text-[#E8C25B]' : 'text-muted-foreground'}
+        />
+        <StatCard
+          label="Replies"
+          value={stats.replies}
+          delta={`${stats.positive_replies} positive`}
+          deltaClass={stats.positive_replies > 0 ? 'text-[#4ADE80]' : 'text-muted-foreground'}
+        />
+        <StatCard
+          label="First Positive Reply"
+          value={
+            stats.first_positive_reply_at
+              ? new Date(stats.first_positive_reply_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              : 'none yet'
+          }
+          delta={stats.first_positive_reply_at ? 'billing started' : '$0 until then'}
+          deltaClass={stats.first_positive_reply_at ? 'text-[#4ADE80]' : 'text-muted-foreground'}
+        />
       </section>
 
       {error && (
@@ -193,12 +226,22 @@ export function Dashboard({ initialDrafts, signals, runs, stats }) {
                     </div>
                   ) : (
                     <div className="flex gap-2.5">
-                      <button
-                        onClick={() => approve(d.id)}
-                        className="rounded-[7px] bg-[#2E63E8] px-[18px] py-2 text-[12.5px] font-semibold text-white transition-colors hover:bg-[#3B70F5]"
-                      >
-                        Approve
-                      </button>
+                      {d.verified ? (
+                        <button
+                          onClick={() => approve(d.id)}
+                          className="rounded-[7px] bg-[#2E63E8] px-[18px] py-2 text-[12.5px] font-semibold text-white transition-colors hover:bg-[#3B70F5]"
+                        >
+                          Approve
+                        </button>
+                      ) : (
+                        <Link
+                          href={`/deal/${d.id}`}
+                          className="rounded-[7px] border border-[#E8C25B]/40 bg-[#E8C25B]/10 px-[18px] py-2 text-[12.5px] font-semibold text-[#E8C25B] transition-colors hover:bg-[#E8C25B]/20"
+                          title="Approve is blocked until the email is verified"
+                        >
+                          Verify email first
+                        </Link>
+                      )}
                       <Link
                         href={`/deal/${d.id}`}
                         className="rounded-[7px] border border-white/[0.14] px-[18px] py-2 text-[12.5px] font-medium text-[#B8C4DC] transition-colors hover:border-white/30 hover:text-foreground"
