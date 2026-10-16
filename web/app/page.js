@@ -39,6 +39,7 @@ export default async function HomePage() {
       title: d.contact_title,
       company: d.company_name,
       subject: d.draft_subject,
+      verified: ['valid', 'manual'].includes(d.contact_email_status),
       generatedAt: d.draft_generated_at,
     }));
 

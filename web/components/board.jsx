@@ -7,7 +7,7 @@ import { Search, Plus } from 'lucide-react';
 import { Card } from './ui/card';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
-import { STAGE_ORDER, STAGE_META, DraftStatusBadge } from './stage-badge';
+import { STAGE_ORDER, STAGE_META, DraftStatusBadge, EmailStatusBadge } from './stage-badge';
 import { NewDealDialog } from './new-deal-dialog';
 import { cn } from '../lib/utils';
 
@@ -184,6 +184,12 @@ export function Board({ initialDeals, companies, contacts }) {
                           </div>
                           <div className="mt-3 flex items-center gap-1.5">
                             <DraftStatusBadge status={deal.draft_status} />
+                            <EmailStatusBadge status={deal.contact_email_status} />
+                            {deal.first_reply_at && (
+                              <span className="inline-flex items-center rounded-full border border-violet-400/30 bg-violet-400/10 px-2 py-0.5 text-xs font-medium text-violet-300">
+                                replied
+                              </span>
+                            )}
                             {deal.campaign_week > 1 && (
                               <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium text-muted-foreground">
                                 wk {deal.campaign_week}

@@ -23,7 +23,7 @@ function getClient() {
 }
 
 async function searchNews(companies) {
-  return perplexity.search(`Search for recent news (last 90 days) about these organizations:
+  return perplexity.searchWithCitations(`Search for recent news (last 90 days) about these organizations:
 ${companies.map((c) => `- ${c.name}${c.industry ? ` (${c.industry})` : ''}`).join('\n')}
 
 I only care about these trigger events:
@@ -36,7 +36,7 @@ I only care about these trigger events:
 For each event found report: the organization, what happened, when, and the source. If you find nothing relevant for an organization, skip it — do not pad the list.`);
 }
 
-async function parseEvents(rawResults, companies) {
+async function parseEvents({ text: rawResults, citations }, companies) {
   const prompt = `You are a data-extraction agent for Marathon Group LLC, an owner's-representative / project-management firm serving healthcare and education organizations.
 
 Below are raw news-search results about organizations in our sales pipeline. Extract each concrete trigger event. Do not invent events — only extract what the results actually report. Skip vague or irrelevant items.
@@ -46,13 +46,18 @@ Organizations we track: ${companies.map((c) => c.name).join(', ')}
 Search results:
 ${rawResults}
 
+Source URLs the search actually read (the ONLY URLs you may use):
+${citations.length ? citations.map((u, i) => `[${i + 1}] ${u}`).join('\n') : '(none)'}
+
+Every event MUST carry the one URL from the list above that reports it. If no listed URL supports an event, leave source_url empty and the event will be discarded. Never invent or guess a URL.
+
 Return ONLY a valid JSON array with no extra text. Each object must have exactly:
 {
   "organization": "organization name, matching our list where possible",
   "event_type": one of ${JSON.stringify(EVENT_TYPES)},
   "description": "one or two sentences on what happened",
   "relevance": "one sentence on why this matters for Marathon Group's outreach",
-  "source_url": ""
+  "source_url": "exact URL copied from the list above"
 }`;
 
   const response = await getClient().messages.create({
@@ -67,7 +72,12 @@ Return ONLY a valid JSON array with no extra text. Each object must have exactly
   if (!Array.isArray(events)) {
     throw new Error('News parse did not return a JSON array');
   }
-  return events.filter((e) => e.organization && e.description);
+  // Hard rule: an event with no real source is not a signal. Keep only events
+  // whose source_url is one of the URLs the search actually returned.
+  const allowed = new Set(citations);
+  return events.filter(
+    (e) => e.organization && e.description && e.source_url && allowed.has(e.source_url)
+  );
 }
 
 // Scans the least-recently-scanned active companies (deals not won/lost) and

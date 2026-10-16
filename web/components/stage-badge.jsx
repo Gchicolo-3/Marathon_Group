@@ -54,3 +54,24 @@ export function DraftStatusBadge({ status, className }) {
     </span>
   );
 }
+
+export const EMAIL_STATUS_META = {
+  valid:      { label: 'verified',     className: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30' },
+  manual:     { label: 'confirmed',    className: 'bg-emerald-400/10 text-emerald-300 border-emerald-400/30' },
+  catch_all:  { label: 'catch all',    className: 'bg-amber-400/10 text-amber-300 border-amber-400/30' },
+  invalid:    { label: 'invalid',      className: 'bg-red-400/10 text-red-300 border-red-400/30' },
+  no_match:   { label: 'no email',     className: 'bg-white/5 text-slate-400 border-white/10' },
+  unverified: { label: 'unverified',   className: 'bg-amber-400/10 text-amber-300 border-amber-400/30' },
+};
+
+export function EmailStatusBadge({ status, className }) {
+  const meta = EMAIL_STATUS_META[status || 'unverified'] || EMAIL_STATUS_META.unverified;
+  return (
+    <span
+      title="Email verification status"
+      className={cn('inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium', meta.className, className)}
+    >
+      {meta.label}
+    </span>
+  );
+}

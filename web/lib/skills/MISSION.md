@@ -31,5 +31,8 @@ his pipeline filled on autopilot so he always has a next engagement in queue
 without spending time he doesn't have.
 
 ## The Goal
-Generate a steady flow of qualified outbound opportunities in healthcare and
-education verticals so Michael never has a gap between engagements.
+Generate a steady flow of qualified outbound opportunities so Michael never
+has a gap between engagements. The hard part of his outreach is not message
+volume, it is identifying the decision makers at organizations that need
+Owner's Representation and Senior Construction Project Management. That is
+the part this system does for him.

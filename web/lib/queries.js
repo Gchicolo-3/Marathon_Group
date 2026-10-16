@@ -7,7 +7,7 @@
 const db = require('./db');
 
 const STAGES = ['new', 'qualified', 'contacted', 'replied', 'meeting_set', 'won', 'lost'];
-const ACTIVITY_TYPES = ['note', 'stage_change', 'email_sent', 'ai_regenerate'];
+const ACTIVITY_TYPES = ['note', 'stage_change', 'email_sent', 'ai_regenerate', 'reply'];
 
 // Latest draft per deal — regenerate inserts new versions, highest id wins.
 const LATEST_DRAFT = `
@@ -123,9 +123,10 @@ async function deleteContact(id) {
 async function listDeals() {
   const r = await db.query(
     `SELECT d.id, d.score, d.stage, d.source, d.campaign_week, d.created_at, d.updated_at,
+            d.first_reply_at, d.reply_classification, d.score_breakdown,
             c.id AS contact_id, c.name AS contact_name, c.title AS contact_title,
-            c.email AS contact_email,
-            co.id AS company_id, co.name AS company_name, co.industry,
+            c.email AS contact_email, c.email_status AS contact_email_status,
+            co.id AS company_id, co.name AS company_name, co.industry, co.segment AS company_segment,
             e.id AS draft_id, e.subject AS draft_subject, e.status AS draft_status,
             e.ai_generated_at AS draft_generated_at
      FROM deals d
@@ -140,11 +141,13 @@ async function listDeals() {
 async function getDeal(id) {
   const r = await db.query(
     `SELECT d.id, d.score, d.stage, d.source, d.campaign_week, d.created_at, d.updated_at,
+            d.first_reply_at, d.reply_classification, d.score_breakdown,
             c.id AS contact_id, c.name AS contact_name, c.title AS contact_title,
             c.email AS contact_email, c.phone AS contact_phone,
+            c.email_status AS contact_email_status, c.email_verified_at AS contact_email_verified_at,
             c.linkedin_url AS contact_linkedin_url,
             co.id AS company_id, co.name AS company_name, co.industry,
-            co.notes AS company_notes,
+            co.segment AS company_segment, co.notes AS company_notes,
             e.id AS draft_id, e.subject AS draft_subject, e.body AS draft_body,
             e.status AS draft_status, e.ai_generated_at AS draft_ai_generated_at,
             e.edited_at AS draft_edited_at
@@ -364,7 +367,30 @@ async function getPipelineStats() {
   } catch (err) {
     console.error('getPipelineStats signals:', err.message);
   }
-  return { ...r.rows[0], signals_week };
+  // Phase two numbers: verification, replies, and the billing trigger.
+  // Wrapped so a database that has not run migration 005 still loads.
+  let verified_contacts = 0, contacts_total = 0, lookups_month = 0, verified_month = 0;
+  let replies = 0, positive_replies = 0, first_positive_reply_at = null;
+  try {
+    const v = await db.query(
+      `SELECT
+         (SELECT count(*) FROM contacts WHERE email_status IN ('valid','manual'))::int AS verified_contacts,
+         (SELECT count(*) FROM contacts)::int AS contacts_total,
+         (SELECT count(*) FROM enrichment_log WHERE created_at >= date_trunc('month', now()))::int AS lookups_month,
+         (SELECT count(*) FROM enrichment_log WHERE outcome = 'valid' AND created_at >= date_trunc('month', now()))::int AS verified_month,
+         (SELECT count(*) FROM activities WHERE type = 'reply')::int AS replies,
+         (SELECT count(*) FROM deals WHERE reply_classification = 'positive')::int AS positive_replies,
+         (SELECT min(first_reply_at) FROM deals) AS first_positive_reply_at`
+    );
+    ({ verified_contacts, contacts_total, lookups_month, verified_month, replies, positive_replies, first_positive_reply_at } = v.rows[0]);
+  } catch (err) {
+    console.error('getPipelineStats phase two:', err.message);
+  }
+  return {
+    ...r.rows[0], signals_week,
+    verified_contacts, contacts_total, lookups_month, verified_month,
+    replies, positive_replies, first_positive_reply_at,
+  };
 }
 
 /* -------------------------------- drafts ------------------------------- */

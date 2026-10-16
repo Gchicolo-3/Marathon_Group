@@ -41,10 +41,10 @@ async function searchRawProspects(count, excludeCompanies) {
 
 ${ICP}
 
-Search for named contacts at private hospital systems, health networks, medical centers, private universities, independent schools, and religious institutions in New Jersey, New York, Connecticut, and Pennsylvania.
-Target titles: VP of Facilities, Director of Capital Projects, Director of Campus Operations, SVP Real Estate, COO, CFO.
+Search for named contacts in the three segments above (small to mid size medical and health providers, universities, mid size private companies that are growing), only in New Jersey and New York.
+Prefer organizations with a recent public growth, expansion, relocation or capital project signal. Target titles: VP or Director of Facilities, Director of Capital Projects, Director of Campus Operations, SVP or VP Real Estate, COO, CFO, or the President or Administrator at smaller organizations.
 ${exclusions}
-For each person report: full name, exact title, organization, whether the organization is healthcare or education, city/state, LinkedIn profile URL if you can find one, and work email if publicly listed. Only include people you actually found in current public sources — never invent names.`);
+For each person report: full name, exact title, organization, whether the organization is health, university or a private growth company, city/state, LinkedIn profile URL if you can find one, and work email if publicly listed. Only include people you actually found in current public sources — never invent names.`);
 }
 
 // Step 2: Claude turns the raw search results into the structured array the
@@ -63,7 +63,7 @@ Return ONLY a valid JSON array with no extra text. Each object must have exactly
   "last_name": "",
   "title": "",
   "company": "",
-  "industry": "healthcare" or "education",
+  "industry": "healthcare" or "education" or "private company",
   "location": "",
   "email": "",
   "linkedin_url": ""

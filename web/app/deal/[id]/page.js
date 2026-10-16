@@ -13,7 +13,7 @@ import { Input } from '../../../components/ui/input';
 import { Textarea } from '../../../components/ui/textarea';
 import { Skeleton } from '../../../components/ui/skeleton';
 import { Separator } from '../../../components/ui/separator';
-import { StageBadge, DraftStatusBadge, STAGE_ORDER, STAGE_META } from '../../../components/stage-badge';
+import { StageBadge, DraftStatusBadge, EmailStatusBadge, STAGE_ORDER, STAGE_META } from '../../../components/stage-badge';
 import { cn } from '../../../lib/utils';
 
 const ACTIVITY_ICONS = {
@@ -21,6 +21,7 @@ const ACTIVITY_ICONS = {
   stage_change: ArrowRightLeft,
   email_sent: Mail,
   ai_regenerate: Sparkles,
+  reply: MessageSquarePlus,
 };
 
 function timeAgo(iso) {
@@ -45,6 +46,7 @@ export default function DealDetailPage() {
   const [busy, setBusy] = useState('');
   const [flash, setFlash] = useState(null); // { kind: 'ok'|'err', text }
   const [loading, setLoading] = useState(true);
+  const [replyText, setReplyText] = useState('');
 
   // Background refreshes must never surface an error banner: when they run
   // alongside a navigation (e.g. the mailto redirect after Send) Safari
@@ -174,6 +176,58 @@ export default function DealDetailPage() {
         'Failed to add note'
       );
       setNote('');
+      loadActivities();
+    });
+
+  const verifyEmail = () =>
+    action('verify', async () => {
+      const r = await expectOk(
+        await fetch(`/api/contacts/${deal.contact_id}/verify`, { method: 'POST' }),
+        'Verification failed'
+      );
+      const msg = {
+        valid: 'Email verified',
+        catch_all: 'Catch all domain. The provider cannot confirm this address, so it stays blocked.',
+        invalid: 'Provider says this email is invalid',
+        no_match: 'No match found at the provider. Nothing was charged.',
+        unverified: 'Provider returned an email but no status. Left unverified.',
+      }[r.outcome] || 'Lookup finished';
+      setFlash({ kind: r.outcome === 'valid' ? 'ok' : 'err', text: msg });
+      loadDeal();
+    });
+
+  const confirmByHand = () =>
+    action('confirm', async () => {
+      await expectOk(
+        await fetch(`/api/contacts/${deal.contact_id}/verify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ manual: true }),
+        }),
+        'Could not confirm email'
+      );
+      setFlash({ kind: 'ok', text: 'Email confirmed by hand' });
+      loadDeal();
+    });
+
+  const recordReply = (classification) =>
+    action('reply', async () => {
+      const r = await expectOk(
+        await fetch(`/api/deals/${id}/reply`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: replyText, classification }),
+        }),
+        'Failed to record reply'
+      );
+      setReplyText('');
+      setFlash({
+        kind: 'ok',
+        text: r.first_positive
+          ? 'First positive reply logged. The billing clock starts today.'
+          : `Reply recorded as ${r.classification.replace(/_/g, ' ')}`,
+      });
+      loadDeal();
       loadActivities();
     });
 
@@ -373,7 +427,11 @@ export default function DealDetailPage() {
                   <Button variant="outline" onClick={regenerate} disabled={!!busy}>
                     <Sparkles /> Regenerate with AI
                   </Button>
-                  <Button onClick={approve} disabled={!!busy || deal.draft_status === 'sent'}>
+                  <Button
+                    onClick={approve}
+                    disabled={!!busy || deal.draft_status === 'sent'}
+                    title={!['valid', 'manual'].includes(deal.contact_email_status) ? 'Verify the email first' : undefined}
+                  >
                     {busy === 'approve' ? <Loader2 className="animate-spin" /> : <Check />} Approve
                   </Button>
                   <Button
@@ -392,6 +450,43 @@ export default function DealDetailPage() {
 
         {/* --------------------------- right column -------------------------- */}
         <div className="space-y-5">
+          <Card>
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-base">Replies</CardTitle>
+              {deal.first_reply_at ? (
+                <p className="text-xs text-emerald-300">
+                  First positive reply logged {new Date(deal.first_reply_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. This is the billing trigger.
+                </p>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  Paste a reply to classify it. Questions, requests for info, agreeing to talk, or a referral count as positive. Out of office, bounces and declines do not.
+                </p>
+              )}
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <Textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                placeholder="Paste their reply here"
+                className="min-h-[90px] text-sm"
+              />
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => recordReply(undefined)} disabled={!!busy || !replyText.trim()}>
+                  {busy === 'reply' ? <Loader2 className="animate-spin" /> : <Sparkles />} Classify and log
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => recordReply('positive')} disabled={!!busy}>
+                  Positive
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => recordReply('negative')} disabled={!!busy}>
+                  Declined
+                </Button>
+              </div>
+              {deal.reply_classification && (
+                <p className="text-xs text-muted-foreground">Latest classification: {deal.reply_classification.replace(/_/g, ' ')}</p>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="flex-row items-center justify-between space-y-0">
               <CardTitle className="text-base">Details</CardTitle>
@@ -457,6 +552,21 @@ export default function DealDetailPage() {
                       ) : (
                         <p className="text-muted-foreground">no email on file</p>
                       )}
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <EmailStatusBadge status={deal.contact_email_status} />
+                        {!['valid', 'manual'].includes(deal.contact_email_status) && (
+                          <>
+                            <Button size="sm" variant="outline" onClick={verifyEmail} disabled={!!busy}>
+                              {busy === 'verify' ? <Loader2 className="animate-spin" /> : <Check />} Verify
+                            </Button>
+                            {deal.contact_email && (
+                              <Button size="sm" variant="ghost" onClick={confirmByHand} disabled={!!busy} title="I checked this address myself">
+                                Confirm by hand
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </div>
                       {deal.contact_phone && <p className="text-muted-foreground">{deal.contact_phone}</p>}
                       {deal.contact_linkedin_url && (
                         <a
@@ -493,6 +603,32 @@ export default function DealDetailPage() {
                       <p className="font-semibold">Week {deal.campaign_week ?? 1}</p>
                     </div>
                   </div>
+                  {deal.score_breakdown?.gates && (
+                    <>
+                      <Separator />
+                      <div className="space-y-1.5 text-sm">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Why this score</p>
+                        {[
+                          ['segment', 'Segment', deal.score_breakdown.parts?.segment, 3],
+                          ['title', 'Title', deal.score_breakdown.parts?.title, 2],
+                          ['geography', 'NJ / NY', deal.score_breakdown.parts?.geography, 1],
+                          ['signal', 'Sourced signal (90 days)', deal.score_breakdown.parts?.signal, 3],
+                          ['contact', 'Verified email', deal.score_breakdown.parts?.contact, 1],
+                        ].map(([key, label, pts, max]) => (
+                          <div key={key} className="flex items-center justify-between gap-3">
+                            <span className="text-muted-foreground">
+                              {deal.score_breakdown.gates[key] === undefined ? '' : deal.score_breakdown.gates[key] ? '✓ ' : '✗ '}
+                              {label}
+                            </span>
+                            <span className="font-mono text-xs tabular-nums">{pts ?? 0}/{max}</span>
+                          </div>
+                        ))}
+                        <p className="pt-1 text-xs text-muted-foreground">
+                          Qualified needs all four gates: segment, NJ or NY, a sourced signal, and a title that hires.
+                        </p>
+                      </div>
+                    </>
+                  )}
                 </>
               )}
             </CardContent>
