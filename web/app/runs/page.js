@@ -81,6 +81,11 @@ export default async function RunsPage() {
                       >
                         {r.errors ? 'error' : 'ok'}
                       </span>
+                      {r.errors && (
+                        <p className="mt-1 max-w-xs break-words text-xs text-red-300/80">
+                          {String(r.errors).slice(0, 200)}
+                        </p>
+                      )}
                     </td>
                   </tr>
                 ))}
