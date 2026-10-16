@@ -15,7 +15,9 @@
     "migrate:enrichment": "node scripts/migrate-005-enrichment.js",
     "enrich:backfill": "node scripts/enrich-backfill.js",
     "deals:rescore": "node scripts/rescore-deals.js",
-    "probe:vibe": "node scripts/probe-vibe.js"
+    "probe:vibe": "node scripts/probe-vibe.js",
+    "migrate:gmail": "node scripts/migrate-006-gmail.js",
+    "test:gmail": "node --test scripts/test-gmail.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
