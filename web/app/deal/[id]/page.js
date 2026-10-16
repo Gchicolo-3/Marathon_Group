@@ -158,6 +158,11 @@ export default function DealDetailPage() {
         await fetch(`/api/deals/${id}/send`, { method: 'POST' }),
         'Failed to send'
       );
+      if (data.via === 'gmail') {
+        setFlash({ kind: 'ok', text: `Sent from ${data.from}` });
+        await Promise.allSettled([loadDeal(), loadActivities()]);
+        return;
+      }
       setFlash({ kind: 'ok', text: 'Marked as sent — opening your mail client' });
       // Refresh before the mailto redirect: navigating first would abort
       // these fetches mid-flight (the "Load failed" banner).

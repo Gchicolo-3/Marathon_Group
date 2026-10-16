@@ -14,6 +14,7 @@ const AGENT_LABELS = {
   enrichment: 'Verifier',
   daily_digest: 'Daily Digest',
   morning_brief: 'Morning Brief',
+  reply_check: 'Reply Reader',
 };
 
 function describeRun(r) {
@@ -29,6 +30,10 @@ function describeRun(r) {
   }
   if (r.drafts_created > 0) {
     parts.push(`drafted ${r.drafts_created} outreach email${r.drafts_created === 1 ? '' : 's'}`);
+  }
+  if (r.run_type === 'reply_check') {
+    parts.length = 0;
+    if (r.prospects_found > 0) parts.push(`read ${r.prospects_found} new repl${r.prospects_found === 1 ? 'y' : 'ies'}`);
   }
   if (r.run_type === 'morning_brief' && parts.length === 0) parts.push('wrote the daily brief');
   if (r.run_type === 'daily_digest' && parts.length === 0) parts.push('generated the daily summary');
@@ -80,12 +85,17 @@ function StatCard({ label, value, delta, deltaClass }) {
   );
 }
 
-export function Dashboard({ initialDrafts, signals, runs, stats }) {
+export function Dashboard({ initialDrafts, signals, runs, stats, gmail }) {
   const [drafts, setDrafts] = useState(initialDrafts);
   const [error, setError] = useState('');
+  const [sending, setSending] = useState(null); // deal id mid-send
 
   const pendingCount = drafts.filter((d) => !d.approved).length;
+  const gmailConnected = !!gmail?.connected;
 
+  // Gmail connected: Approve also sends the email from the connected
+  // account. Not connected: Approve only marks the draft approved (Send on
+  // the deal page hands back the mailto link).
   async function approve(id) {
     setError('');
     setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, approved: true } : d)));
@@ -94,6 +104,20 @@ export function Dashboard({ initialDrafts, signals, runs, stats }) {
       const data = await res.json().catch(() => ({}));
       setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, approved: false } : d)));
       setError(data.error || 'Failed to approve draft — change was reverted');
+      return;
+    }
+    if (!gmailConnected) return;
+
+    setSending(id);
+    try {
+      const sent = await fetch(`/api/deals/${id}/send`, { method: 'POST' });
+      const data = await sent.json().catch(() => ({}));
+      if (!sent.ok) throw new Error(data.error || 'Approved, but the send failed');
+      setDrafts((ds) => ds.map((d) => (d.id === id ? { ...d, sent: data.via === 'gmail', from: data.from } : d)));
+    } catch (err) {
+      setError(`${err.message}. The draft stays approved; open it to retry Send.`);
+    } finally {
+      setSending(null);
     }
   }
 
@@ -222,7 +246,14 @@ export function Dashboard({ initialDrafts, signals, runs, stats }) {
                   </div>
                   {d.approved ? (
                     <div className="flex items-center gap-2 text-[12.5px] font-medium text-[#4ADE80]">
-                      <span className="font-mono">✓</span> Approved — queued to send
+                      <span className="font-mono">✓</span>{' '}
+                      {sending === d.id
+                        ? 'Approved — sending from Gmail…'
+                        : d.sent
+                          ? `Sent from ${d.from || gmail.email}`
+                          : gmailConnected
+                            ? 'Approved'
+                            : 'Approved — queued to send'}
                     </div>
                   ) : (
                     <div className="flex gap-2.5">
@@ -230,8 +261,9 @@ export function Dashboard({ initialDrafts, signals, runs, stats }) {
                         <button
                           onClick={() => approve(d.id)}
                           className="rounded-[7px] bg-[#2E63E8] px-[18px] py-2 text-[12.5px] font-semibold text-white transition-colors hover:bg-[#3B70F5]"
+                          title={gmailConnected ? `Approve and send from ${gmail.email}` : undefined}
                         >
-                          Approve
+                          {gmailConnected ? 'Approve & Send' : 'Approve'}
                         </button>
                       ) : (
                         <Link
