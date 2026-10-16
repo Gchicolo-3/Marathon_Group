@@ -2,6 +2,7 @@ import { listAgentRuns } from '../../lib/queries';
 import { Card, CardContent } from '../../components/ui/card';
 import { RunPipelineButton } from '../../components/run-pipeline-button';
 import { AdminTools } from '../../components/admin-tools';
+import { GmailConnect } from '../../components/gmail-connect';
 import { cn } from '../../lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -39,6 +40,7 @@ export default async function RunsPage() {
         <RunPipelineButton />
       </div>
 
+      <GmailConnect />
       <AdminTools />
 
       <Card>

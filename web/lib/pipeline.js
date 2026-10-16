@@ -11,6 +11,7 @@ const { runNewsScan } = require('./news');
 const { runEnrichmentBatch } = require('./enrich');
 const { isConfigured: enrichmentConfigured } = require('./enrichment');
 const { logAgentRun } = require('./queries');
+const { checkReplies, getAccount } = require('./gmail');
 
 async function runPipeline({ prospectLimit = 10, qualifyLimit = 10, draftLimit = 5, followUpLimit = 5, newsLimit = 5, enrichLimit = 10 } = {}) {
   const summary = { found: 0, scored: 0, qualified: 0, drafted: 0, follow_ups: 0, signals: 0, verified: 0, errors: [] };
@@ -68,6 +69,16 @@ async function runPipeline({ prospectLimit = 10, qualifyLimit = 10, draftLimit =
     summary.follow_ups = f.drafted;
   } catch (err) {
     summary.errors.push(`follow-ups: ${err.message}`);
+  }
+
+  // Read new Gmail replies (billing trigger) when a mailbox is connected.
+  try {
+    if (await getAccount().catch(() => null)) {
+      const r = await checkReplies();
+      summary.replies = r.replies;
+    }
+  } catch (err) {
+    summary.errors.push(`replies: ${err.message}`);
   }
 
   await logAgentRun({
