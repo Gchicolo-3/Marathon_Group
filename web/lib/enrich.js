@@ -82,17 +82,31 @@ async function runEnrichmentBatch(limit = 10) {
   ).rows;
 
   const results = [];
+  let stopped = null;
   for (const row of rows) {
     try {
       results.push(await verifyContact(row.id));
     } catch (err) {
       if (err.code === 'NOT_CONFIGURED') throw err;
+      // Out of credits or bad key: every remaining lookup will fail the
+      // same way, so stop the batch instead of burning a call per contact.
+      if (/\b(401|402|403)\b/.test(err.message) || /insufficient credits/i.test(err.message)) {
+        stopped = `provider refused (${err.message.slice(0, 120)}), batch stopped`;
+        console.error('Enrichment stopped:', err.message);
+        break;
+      }
       console.error(`Enrichment failed for contact ${row.id}:`, err.message);
+      // Count the failed attempt so one bad contact cannot loop daily forever.
+      await db.query(
+        `UPDATE contacts SET enrichment_attempts = enrichment_attempts + 1, enrichment_last_at = now() WHERE id = $1`,
+        [row.id]
+      ).catch(() => {});
       results.push({ contact_id: row.id, outcome: 'error', error: err.message });
     }
   }
   return {
     success: true,
+    stopped,
     attempted: results.length,
     verified: results.filter((x) => x.outcome === 'valid').length,
     no_match: results.filter((x) => x.outcome === 'no_match').length,

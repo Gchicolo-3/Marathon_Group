@@ -12,8 +12,16 @@ const { runEnrichmentBatch } = require('./enrich');
 const { isConfigured: enrichmentConfigured } = require('./enrichment');
 const { logAgentRun } = require('./queries');
 
+// Phase A / Phase B switch (Oct 30 decision). Default is research only:
+// pull, scan, verify, and score the list, but write no drafts and no
+// follow-ups. Set PIPELINE_MODE=outbound in Vercel to turn drafting back on.
+function isResearchOnly() {
+  return (process.env.PIPELINE_MODE || 'research').toLowerCase() !== 'outbound';
+}
+
 async function runPipeline({ prospectLimit = 10, qualifyLimit = 10, draftLimit = 5, followUpLimit = 5, newsLimit = 5, enrichLimit = 10 } = {}) {
-  const summary = { found: 0, scored: 0, qualified: 0, drafted: 0, follow_ups: 0, signals: 0, verified: 0, errors: [] };
+  const researchOnly = isResearchOnly();
+  const summary = { mode: researchOnly ? 'research' : 'outbound', found: 0, scored: 0, qualified: 0, drafted: 0, follow_ups: 0, signals: 0, verified: 0, errors: [] };
 
   try {
     const p = await runProspectorBatch(prospectLimit);
@@ -37,6 +45,7 @@ async function runPipeline({ prospectLimit = 10, qualifyLimit = 10, draftLimit =
     try {
       const e = await runEnrichmentBatch(enrichLimit);
       summary.verified = e.verified;
+      if (e.stopped) summary.errors.push(`enrichment: ${e.stopped}`);
       await logAgentRun({ run_type: 'enrichment', prospects_found: e.verified }).catch(() => {});
     } catch (err) {
       summary.errors.push(`enrichment: ${err.message}`);
@@ -54,6 +63,11 @@ async function runPipeline({ prospectLimit = 10, qualifyLimit = 10, draftLimit =
   } catch (err) {
     summary.errors.push(`qualifier: ${err.message}`);
     await logAgentRun({ run_type: 'qualification', errors: err.message }).catch(() => {});
+  }
+
+  if (researchOnly) {
+    await logAgentRun({ run_type: 'draft_generation', drafts_created: 0, notes: 'research only mode, drafting skipped' }).catch(() => {});
+    return summary;
   }
 
   try {
@@ -79,4 +93,4 @@ async function runPipeline({ prospectLimit = 10, qualifyLimit = 10, draftLimit =
   return summary;
 }
 
-module.exports = { runPipeline };
+module.exports = { runPipeline, isResearchOnly };
