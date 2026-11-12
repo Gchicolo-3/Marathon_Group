@@ -25,12 +25,12 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${plexSans.variable} ${plexMono.variable}`}>
       <body className="min-h-screen font-sans">
-        <header className="sticky top-0 z-20 flex h-16 items-center gap-10 border-b border-white/[0.07] bg-[#0B1120]/85 px-6 backdrop-blur-xl lg:px-10">
-          <Link href="/" className="flex items-center gap-3">
+        <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b sm:gap-10 border-white/[0.07] bg-[#0B1120]/85 px-6 backdrop-blur-xl lg:px-10">
+          <Link href="/keep-warm" className="flex items-center gap-3">
             <div className="flex h-7 w-7 items-center justify-center rounded-[7px] bg-gradient-to-br from-[#2E63E8] to-[#5B8CFF] text-[15px] font-bold text-white">
               M
             </div>
-            <div className="flex flex-col leading-none">
+            <div className="hidden flex-col leading-none sm:flex">
               <span className="text-sm font-semibold tracking-[0.01em]">Marathon Group</span>
               <span className="mt-[3px] font-mono text-[9.5px] tracking-[0.22em] text-[#5F6B85]">
                 CRM
@@ -38,14 +38,14 @@ export default function RootLayout({ children }) {
             </div>
           </Link>
           <MainNav />
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto hidden items-center gap-4 md:flex">
             <HeaderClock />
             <div className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-white/10 bg-[#1A2338] text-[11px] font-semibold text-[#9DB4E8]">
               MS
             </div>
           </div>
         </header>
-        <main className="mx-auto max-w-[1400px] px-6 py-6">{children}</main>
+        <main className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6">{children}</main>
       </body>
     </html>
   );

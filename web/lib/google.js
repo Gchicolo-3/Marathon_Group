@@ -46,7 +46,7 @@ function authUrl(state) {
     response_type: 'code',
     scope: SCOPES.join(' '),
     access_type: 'offline',
-    prompt: 'consent',
+    prompt: 'select_account consent',
     include_granted_scopes: 'false',
     state,
   });
@@ -85,7 +85,9 @@ function refreshAccessToken(refreshToken) {
 // Completes a connection: exchanges the code, checks the scopes Google
 // actually granted, looks up the mailbox address, and stores the tokens.
 // Only one account is kept; connecting a new one replaces the old.
-async function connectWithCode(code) {
+// authorize(email) runs before anything is stored; throw from it to refuse
+// the account (used by Sign in with Google to enforce the allowlist).
+async function connectWithCode(code, { authorize } = {}) {
   const tokens = await exchangeCode(code);
   const granted = (tokens.scope || '').split(/\s+/);
   const missing = SCOPES.filter((s) => !granted.includes(s));
@@ -99,6 +101,7 @@ async function connectWithCode(code) {
   const profile = await gmailFetch(tokens.access_token, '/profile');
   const email = (profile.emailAddress || '').toLowerCase();
   if (!email) throw new Error('Could not read the mailbox address');
+  if (authorize) await authorize(email);
 
   const expiresAt = new Date(Date.now() + (Number(tokens.expires_in) || 3600) * 1000);
   await db.query(`DELETE FROM gmail_accounts WHERE email <> $1`, [email]);

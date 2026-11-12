@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { COOKIE_NAME, sessionToken } from '../../../lib/auth';
+import { COOKIE_NAME, sessionToken, SESSION_MAX_AGE } from '../../../lib/auth';
 
 export async function POST(request) {
   const { password } = await request.json().catch(() => ({}));
@@ -17,7 +17,7 @@ export async function POST(request) {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: 60 * 60 * 24 * 30, // 30 days
+    maxAge: SESSION_MAX_AGE,
   });
   return response;
 }

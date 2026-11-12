@@ -10,7 +10,11 @@
     },
     {
       "path": "/api/cron/replies",
-      "schedule": "*/15 * * * 1-5"
+      "schedule": "0 13 * * *"
+    },
+    {
+      "path": "/api/cron/keepwarm",
+      "schedule": "0 12 * * 0"
     }
   ]
 }

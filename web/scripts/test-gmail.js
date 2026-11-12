@@ -37,7 +37,7 @@ test('tokens round trip through AES-256-GCM and never appear in the blob', () =>
 test('authUrl asks for offline access, consent, and only the two Gmail scopes', () => {
   const u = new URL(google.authUrl('abc'));
   assert.strictEqual(u.searchParams.get('access_type'), 'offline');
-  assert.strictEqual(u.searchParams.get('prompt'), 'consent');
+  assert.strictEqual(u.searchParams.get('prompt'), 'select_account consent');
   assert.strictEqual(u.searchParams.get('state'), 'abc');
   assert.deepStrictEqual(u.searchParams.get('scope').split(' '), [
     'https://www.googleapis.com/auth/gmail.send',

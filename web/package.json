@@ -17,7 +17,8 @@
     "deals:rescore": "node scripts/rescore-deals.js",
     "probe:vibe": "node scripts/probe-vibe.js",
     "migrate:gmail": "node scripts/migrate-006-gmail.js",
-    "test:gmail": "node --test scripts/test-gmail.js"
+    "test:gmail": "node --test scripts/test-gmail.js",
+    "test:keepwarm": "node scripts/test-keepwarm.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",
@@ -29,7 +30,8 @@
     "next": "^15.3.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "xlsx": "0.18.5"
   },
   "devDependencies": {
     "autoprefixer": "^10.5.2",

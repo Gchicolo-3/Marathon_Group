@@ -6,7 +6,15 @@ export async function middleware(request) {
 
   // Login page and login endpoint stay open. Cron endpoints authenticate
   // with CRON_SECRET inside the route (Vercel Cron has no session cookie).
-  if (pathname === '/login' || pathname === '/api/login' || pathname.startsWith('/api/cron/')) {
+  if (
+    pathname === '/login' ||
+    pathname === '/api/login' ||
+    pathname.startsWith('/api/cron/') ||
+    // Sign in with Google starts and finishes here before there is a session.
+    // The callback enforces ALLOWED_EMAILS itself.
+    pathname === '/api/google/connect' ||
+    pathname === '/api/google/callback'
+  ) {
     return NextResponse.next();
   }
 

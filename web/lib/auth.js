@@ -30,4 +30,7 @@ async function isValidSession(cookieValue) {
   }
 }
 
-module.exports = { COOKIE_NAME, sessionToken, isValidSession };
+// 90 days: Mike should not be bounced to the login screen every month.
+const SESSION_MAX_AGE = 60 * 60 * 24 * 90;
+
+module.exports = { COOKIE_NAME, sessionToken, isValidSession, SESSION_MAX_AGE };

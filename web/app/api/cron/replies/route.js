@@ -3,12 +3,14 @@ import db from '../../../../lib/db';
 import { logAgentRun } from '../../../../lib/queries';
 import { classifyReply, recordReply } from '../../../../lib/replies';
 import { isConnected, getThread, replyMessagesInThread } from '../../../../lib/google';
+import { checkTouchReplies } from '../../../../lib/keepwarm';
+import { ensureSchema } from '../../../../lib/schema';
 
 export const maxDuration = 300;
 
 const DEALS_PER_RUN = 40;
 
-// Reply reader (every 15 minutes on weekdays, see web/vercel.json). For each
+// Reply reader (daily, see web/vercel.json). For each
 // Contacted deal that went out through Gmail, open its thread and look for
 // messages from the contact we have not seen. Each new one goes through
 // classifyReply then recordReply, which is the only place first_reply_at
@@ -24,6 +26,11 @@ export async function GET(request) {
 
   const summary = { checked: 0, replies: 0, positive: 0, errors: [] };
   try {
+    await ensureSchema();
+    // Keep warm notes first (Phase A), then outbound deals (Phase B).
+    const kw = await checkTouchReplies().catch((err) => ({ errors: [err.message] }));
+    summary.keep_warm = { checked: kw.checked || 0, replies: kw.replies || 0 };
+    summary.errors.push(...(kw.errors || []));
     const deals = (
       await db.query(
         `SELECT id, gmail_thread_id FROM deals

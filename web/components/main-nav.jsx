@@ -4,8 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '../lib/utils';
 
+// Keep warm (Phase A) first; the prospecting pages (Phase B) follow.
 const ITEMS = [
-  { label: 'Dashboard', href: '/' },
+  { label: 'This Week', href: '/keep-warm' },
+  { label: 'People', href: '/people' },
+  { label: 'Settings', href: '/settings' },
+  { label: 'Prospecting', href: '/' },
   { label: 'Pipeline', href: '/pipeline' },
   { label: 'Approval Queue', href: '/queue' },
   { label: 'Signals', href: '/signals' },
