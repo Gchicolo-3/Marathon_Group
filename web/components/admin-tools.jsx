@@ -43,7 +43,7 @@ export function AdminTools() {
   const migrate = () =>
     run('migrate', async () => {
       const r = await post('/api/admin/migrate');
-      say('ok', `Migration 005 done. ${JSON.stringify(r.result)}`);
+      say('ok', `Migrations 005 and 006 done. ${JSON.stringify(r.result)}`);
     });
 
   const probe = () =>

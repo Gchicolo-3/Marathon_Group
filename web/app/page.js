@@ -6,6 +6,7 @@ import {
   getPipelineStats,
 } from '../lib/queries';
 import { Dashboard } from '../components/dashboard';
+import { getStatus as getGmailStatus } from '../lib/google';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,12 +22,13 @@ function briefDateLine(iso) {
 }
 
 export default async function HomePage() {
-  const [deals, signals, runs, brief, stats] = await Promise.all([
+  const [deals, signals, runs, brief, stats, gmail] = await Promise.all([
     listDeals(),
     listTriggerEvents(5),
     listAgentRuns(6),
     getLatestBrief(),
     getPipelineStats(),
+    getGmailStatus(),
   ]);
 
   // Deals whose latest draft still needs a human — highest score first
@@ -73,7 +75,7 @@ export default async function HomePage() {
         )}
       </section>
 
-      <Dashboard initialDrafts={drafts} signals={signals} runs={runs} stats={stats} />
+      <Dashboard initialDrafts={drafts} signals={signals} runs={runs} stats={stats} gmail={{ connected: !!gmail.connected, email: gmail.email || null }} />
     </div>
   );
 }

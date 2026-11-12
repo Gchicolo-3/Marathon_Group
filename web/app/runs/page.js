@@ -1,7 +1,9 @@
+import { Suspense } from 'react';
 import { listAgentRuns } from '../../lib/queries';
 import { Card, CardContent } from '../../components/ui/card';
 import { RunPipelineButton } from '../../components/run-pipeline-button';
 import { AdminTools } from '../../components/admin-tools';
+import { GmailConnect } from '../../components/gmail-connect';
 import { cn } from '../../lib/utils';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +16,7 @@ const RUN_TYPE_LABELS = {
   news_scan: 'News agent',
   enrichment: 'Verifier',
   morning_brief: 'Morning brief',
+  reply_check: 'Reply reader',
 };
 
 function formatDate(iso) {
@@ -40,6 +43,10 @@ export default async function RunsPage() {
       </div>
 
       <AdminTools />
+
+      <Suspense fallback={null}>
+        <GmailConnect />
+      </Suspense>
 
       <Card>
         <CardContent className="p-0">
