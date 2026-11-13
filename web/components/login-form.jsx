@@ -88,6 +88,9 @@ export function LoginForm({ googleReady, initialError }) {
           )}
         </CardContent>
       </Card>
+      <p className="mt-4 text-center text-xs text-muted-foreground">
+        <a href="/privacy" className="hover:underline">Privacy</a> · <a href="/terms" className="hover:underline">Terms</a>
+      </p>
     </div>
   );
 }

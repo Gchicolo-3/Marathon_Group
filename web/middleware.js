@@ -8,6 +8,9 @@ export async function middleware(request) {
   // with CRON_SECRET inside the route (Vercel Cron has no session cookie).
   if (
     pathname === '/login' ||
+    // Public pages Google requires for the OAuth consent screen.
+    pathname === '/privacy' ||
+    pathname === '/terms' ||
     pathname === '/api/login' ||
     pathname.startsWith('/api/cron/') ||
     // Sign in with Google starts and finishes here before there is a session.
