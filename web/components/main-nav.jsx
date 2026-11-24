@@ -4,19 +4,12 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '../lib/utils';
 
-// Keep warm (Phase A) first; the prospecting pages (Phase B) follow.
+// Phase A keep warm only. The prospecting screens (Phase B) are hidden in
+// middleware.js until outbound is switched on.
 const ITEMS = [
   { label: 'This Week', href: '/keep-warm' },
   { label: 'People', href: '/people' },
   { label: 'Settings', href: '/settings' },
-  { label: 'Prospecting', href: '/' },
-  { label: 'Pipeline', href: '/pipeline' },
-  { label: 'Approval Queue', href: '/queue' },
-  { label: 'Signals', href: '/signals' },
-  { label: 'Activity', href: '/activity' },
-  { label: 'Companies', href: '/companies' },
-  { label: 'Contacts', href: '/contacts' },
-  { label: 'Runs', href: '/runs' },
 ];
 
 export function MainNav() {

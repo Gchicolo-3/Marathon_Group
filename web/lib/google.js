@@ -23,14 +23,27 @@ const STATE_COOKIE = 'google_oauth_state';
 let http = (...args) => fetch(...args);
 function setHttp(fn) { http = fn || ((...args) => fetch(...args)); }
 
+// GOOGLE_REDIRECT_URI is optional: without it (or when the request comes in
+// on a different host, e.g. a preview deploy) the callback URL is built from
+// the request's own origin. Google only accepts URIs registered on the OAuth
+// client, so each host used must be added in the Google Cloud console.
 function isConfigured() {
-  return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET &&
-    process.env.GOOGLE_REDIRECT_URI && process.env.TOKEN_ENC_KEY);
+  return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET && process.env.TOKEN_ENC_KEY);
 }
 
 function missingConfig() {
-  return ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'GOOGLE_REDIRECT_URI', 'TOKEN_ENC_KEY']
+  return ['GOOGLE_CLIENT_ID', 'GOOGLE_CLIENT_SECRET', 'TOKEN_ENC_KEY']
     .filter((k) => !process.env[k]);
+}
+
+function redirectUriFor(origin) {
+  const fixed = (process.env.GOOGLE_REDIRECT_URI || '').trim();
+  if (fixed) {
+    try {
+      if (!origin || new URL(fixed).origin === origin) return fixed;
+    } catch { /* malformed env value: fall through */ }
+  }
+  return `${origin}/api/google/callback`;
 }
 
 /* ------------------------------- OAuth -------------------------------- */
@@ -39,10 +52,10 @@ function newState() {
   return crypto.randomBytes(16).toString('base64url');
 }
 
-function authUrl(state) {
+function authUrl(state, redirectUri) {
   const p = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID,
-    redirect_uri: process.env.GOOGLE_REDIRECT_URI,
+    redirect_uri: redirectUri,
     response_type: 'code',
     scope: SCOPES.join(' '),
     access_type: 'offline',
@@ -72,8 +85,8 @@ async function tokenRequest(params) {
 }
 
 // Authorization code -> tokens. Returns { access_token, refresh_token, expires_in, scope }.
-function exchangeCode(code) {
-  return tokenRequest({ code, grant_type: 'authorization_code', redirect_uri: process.env.GOOGLE_REDIRECT_URI });
+function exchangeCode(code, redirectUri) {
+  return tokenRequest({ code, grant_type: 'authorization_code', redirect_uri: redirectUri });
 }
 
 function refreshAccessToken(refreshToken) {
@@ -87,8 +100,10 @@ function refreshAccessToken(refreshToken) {
 // Only one account is kept; connecting a new one replaces the old.
 // authorize(email) runs before anything is stored; throw from it to refuse
 // the account (used by Sign in with Google to enforce the allowlist).
-async function connectWithCode(code, { authorize } = {}) {
-  const tokens = await exchangeCode(code);
+// With keepExisting, a plain sign in by a second allowed person (George
+// testing) does not replace a mailbox that is already connected (Mike's).
+async function connectWithCode(code, { authorize, redirectUri, keepExisting = false } = {}) {
+  const tokens = await exchangeCode(code, redirectUri);
   const granted = (tokens.scope || '').split(/\s+/);
   const missing = SCOPES.filter((s) => !granted.includes(s));
   if (missing.length) {
@@ -103,6 +118,12 @@ async function connectWithCode(code, { authorize } = {}) {
   if (!email) throw new Error('Could not read the mailbox address');
   if (authorize) await authorize(email);
 
+  if (typeof keepExisting === 'function' ? keepExisting(email) : keepExisting) {
+    const cur = await db.query(`SELECT email FROM gmail_accounts ORDER BY connected_at DESC LIMIT 1`);
+    const current = cur.rows[0]?.email;
+    if (current && current !== email) return { email, connected: false, keptEmail: current };
+  }
+
   const expiresAt = new Date(Date.now() + (Number(tokens.expires_in) || 3600) * 1000);
   await db.query(`DELETE FROM gmail_accounts WHERE email <> $1`, [email]);
   await db.query(
@@ -115,7 +136,7 @@ async function connectWithCode(code, { authorize } = {}) {
            connected_at = now()`,
     [email, encrypt(tokens.refresh_token), encrypt(tokens.access_token), expiresAt]
   );
-  return { email };
+  return { email, connected: true };
 }
 
 // Public shape for the UI. Never includes tokens. Returns null when the
@@ -301,7 +322,7 @@ function replyMessagesInThread(thread, { ownEmail, seen = new Set(), afterMs = 0
 }
 
 module.exports = {
-  SCOPES, STATE_COOKIE, isConfigured, missingConfig, setHttp,
+  SCOPES, STATE_COOKIE, isConfigured, missingConfig, redirectUriFor, setHttp,
   newState, authUrl, exchangeCode, refreshAccessToken,
   connectWithCode, getStatus, isConnected, disconnect, getAccount,
   buildMime, sendMail, getThread,

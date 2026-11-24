@@ -35,7 +35,7 @@ test('tokens round trip through AES-256-GCM and never appear in the blob', () =>
 });
 
 test('authUrl asks for offline access, consent, and only the two Gmail scopes', () => {
-  const u = new URL(google.authUrl('abc'));
+  const u = new URL(google.authUrl('abc', 'https://example.test/api/google/callback'));
   assert.strictEqual(u.searchParams.get('access_type'), 'offline');
   assert.strictEqual(u.searchParams.get('prompt'), 'select_account consent');
   assert.strictEqual(u.searchParams.get('state'), 'abc');
@@ -90,7 +90,7 @@ test('exchangeCode posts the code to the token endpoint through the mock client'
     return { ok: true, status: 200, json: async () => ({ access_token: 'a', refresh_token: 'r', expires_in: 3600, scope: google.SCOPES.join(' ') }) };
   });
   try {
-    const t = await google.exchangeCode('the-code');
+    const t = await google.exchangeCode('the-code', 'https://example.test/api/google/callback');
     assert.strictEqual(t.refresh_token, 'r');
     assert.strictEqual(calls[0].url, 'https://oauth2.googleapis.com/token');
     assert.strictEqual(calls[0].body.grant_type, 'authorization_code');

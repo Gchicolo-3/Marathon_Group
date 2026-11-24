@@ -32,12 +32,12 @@ export function GmailButton({ gmail, configured }) {
     return (
       <div className="flex flex-wrap items-center gap-3">
         <span className="flex items-center gap-2 text-sm text-emerald-400"><Check className="h-4 w-4" /> Connected as {gmail.email}</span>
-        <a href="/api/google/connect" className="text-xs text-muted-foreground underline-offset-4 hover:underline">Use a different account</a>
+        <a href="/api/google/connect?mode=gmail" className="text-xs text-muted-foreground underline-offset-4 hover:underline">Use a different account</a>
       </div>
     );
   }
   return (
-    <a href="/api/google/connect" className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#1F1F1F] hover:bg-white/90">
+    <a href="/api/google/connect?mode=gmail" className="inline-flex h-11 items-center gap-2 rounded-md bg-white px-5 text-sm font-semibold text-[#1F1F1F] hover:bg-white/90">
       <Mail className="h-4 w-4" /> Connect Gmail
     </a>
   );

@@ -18,7 +18,8 @@
     "probe:vibe": "node scripts/probe-vibe.js",
     "migrate:gmail": "node scripts/migrate-006-gmail.js",
     "test:gmail": "node --test scripts/test-gmail.js",
-    "test:keepwarm": "node scripts/test-keepwarm.js"
+    "test:keepwarm": "node scripts/test-keepwarm.js",
+    "test:auth": "node scripts/test-auth.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.110.0",

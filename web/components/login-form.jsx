@@ -1,10 +1,4 @@
-'use client';
-
-import { useState } from 'react';
-import { Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
 
 function GoogleMark() {
   return (
@@ -18,28 +12,6 @@ function GoogleMark() {
 }
 
 export function LoginForm({ googleReady, initialError }) {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [showPassword, setShowPassword] = useState(!googleReady);
-
-  async function submit(e) {
-    e.preventDefault();
-    setBusy(true);
-    setError('');
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password }),
-    });
-    if (res.ok) {
-      window.location.href = '/keep-warm';
-    } else {
-      setError('Incorrect password');
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="mx-auto mt-16 max-w-sm px-2 sm:mt-24">
       <Card>
@@ -48,7 +20,7 @@ export function LoginForm({ googleReady, initialError }) {
           <p className="text-sm text-muted-foreground">Your relationship keep warm engine</p>
         </CardHeader>
         <CardContent className="space-y-4">
-          {googleReady && (
+          {googleReady ? (
             <>
               <a
                 href="/api/google/connect"
@@ -60,32 +32,11 @@ export function LoginForm({ googleReady, initialError }) {
                 Use the Gmail you send from. Google will ask to let this app send email for you and read replies to the notes it sends. Nothing goes out until you tap Send.
               </p>
             </>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground">Sign in is being set up. Check back shortly.</p>
           )}
 
           {initialError && <p className="text-center text-sm text-red-400">{initialError}</p>}
-
-          {showPassword ? (
-            <form onSubmit={submit} className="space-y-3 border-t border-white/10 pt-4">
-              <Input
-                type="password"
-                placeholder="Admin password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Button type="submit" variant="outline" className="w-full" disabled={busy || !password}>
-                {busy && <Loader2 className="animate-spin" />} Sign in with password
-              </Button>
-              {error && <p className="text-center text-sm text-red-400">{error}</p>}
-            </form>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setShowPassword(true)}
-              className="block w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline"
-            >
-              Admin sign in
-            </button>
-          )}
         </CardContent>
       </Card>
       <p className="mt-4 text-center text-xs text-muted-foreground">

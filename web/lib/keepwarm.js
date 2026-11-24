@@ -180,7 +180,7 @@ const BANNED = [
 // Strips em dashes and any sign off the model added; we append our own.
 function cleanNote(body, signOff) {
   let text = String(body || '')
-    .replace(/—|–/g, ', ')
+    .replace(/\s*[—–]\s*/g, ', ')
     .replace(/[ \t]+\n/g, '\n')
     .trim();
   const lines = text.split('\n');

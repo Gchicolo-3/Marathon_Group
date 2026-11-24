@@ -1,93 +1,76 @@
-# Marathon Group CRM — User Guide
+# Marathon Group Keep Warm: How It Works
 
-*Written for Michael. Ten minutes a day, coffee in hand.*
+Written for Mike. About five minutes to set up, then a few minutes on Sunday.
 
-## What this system does while you sleep
+What it does: every Sunday morning it picks the people in your network who are due for a hello, writes a short two line note to each one in your voice, and lines them up for you. Nothing is ever sent until you tap Send.
 
-Every weekday morning around 7 AM ET, your agents run:
+## 1. Sign in
 
-1. **Prospector** finds new prospects matching your ideal client profile and
-   adds them to the pipeline.
-2. **Qualifier** scores each new prospect 1–10 against your ICP — who's worth
-   your time.
-3. **Signal Scanner** reads news, filings, and announcements for trigger
-   events — bond approvals, capital projects, new hires, expansions — the
-   "why now" behind a good outreach email.
-4. **Draft Writer** writes outreach emails in your voice for qualified
-   prospects and campaign follow-ups. **Nothing is ever sent without your
-   approval.**
-5. **Morning Brief** summarizes all of it into the card at the top of your
-   dashboard.
+1. Open the link George sent you.
+2. Tap Sign in with Google.
+3. Pick the Gmail account you send email from.
+4. Google asks to let the app send email for you and read replies to the notes it sends. Tick both boxes and continue.
 
-## Your 10-minute daily loop
+Only addresses George has set up can get in. Anyone else gets turned away.
 
-1. **Open the Dashboard** (the home page). Read **Today's Brief** — it tells
-   you what happened overnight and what to do first.
-2. **Work the Pending Email Drafts list.** Each card shows who the email is
-   to, their title and company, and the subject line.
-   - **Approve** — one click; the draft is marked ready to send.
-   - **Edit** — opens the full email so you can adjust wording before
-     approving. Your edits are what gets approved.
-3. **Scan Recent Signals.** These are live reasons to reach out. If a signal
-   is hot, the matching draft is usually already in your queue.
-4. Done. That's the whole job — the agents handle the rest.
+## 2. Upload your Excel file
 
-## The pages
+1. On the setup screen, go to Bring in your people.
+2. Pick your Excel or CSV file. Every tab is read.
+3. Check the preview. Untick any tab you do not want.
+4. Tap Import.
 
-| Page | What it's for |
-|---|---|
-| **Dashboard** | Morning brief, key numbers, drafts to approve, fresh signals |
-| **Pipeline** | Every deal as a card — drag between stages (New → Qualified → Contacted → Replied → Meeting set → Won/Lost) |
-| **Approval Queue** | Focused one-at-a-time review: edit → approve → next. Also **Regenerate** if a draft misses the mark |
-| **Signals** | Every trigger event found, with a link to the source article |
-| **Activity** | Plain-English feed of everything the system did, newest first |
-| **Companies / Contacts** | Your directory — add or edit anyone manually |
-| **Runs** | Technical log of agent runs, plus a button to trigger a run manually |
+It finds the Name, Email, Company, Title, Phone and Notes columns on its own. If the same person is on two tabs, they only come in once. You can import again later from the People page with Import more; nobody gets doubled.
 
-## Sending an approved email
+## 3. Set how often to touch each person
 
-Open the deal (click **Edit** on a draft, or any card on the Pipeline board)
-and hit **Send**. Today that marks the email sent and opens it pre-filled in
-your mail program — you press send there. This keeps you in control of every
-send while the system tracks the sequence.
+1. Pick a default: every month, every 2 months, every 3 months, every 6 months, or once a year.
+2. To change one person, open the People page, find them, and change How often.
+3. While you are there, add a line in Your note about them (for example, "worked together at Montefiore"). The writer uses it.
 
-## When someone replies
+## 4. Paste 2 or 3 of your emails
 
-Drag their card to **Replied** on the Pipeline board (or change the stage on
-the deal page). That stops the follow-up sequence for them immediately and
-flags them for your personal attention.
+1. Open your Sent folder and copy an email you wrote to someone you know.
+2. Paste it into Teach it how you write. Add one or two more.
+3. Tap Save.
 
-## The 26-week campaign
+The more it sees, the more the notes sound like you.
 
-A prospect who doesn't reply gets a fresh-angle follow-up drafted roughly
-every 7 days after the last send, for up to 26 weeks. Every follow-up lands
-in your approval queue like any other draft — the system never sends on its
-own.
+## 5. Finish setup
 
-## FAQ
+Tap Finish and write my first notes. You land on This Week.
 
-**Where does the email voice come from?** Three files the agents read every
-time: your voice guide, mission context, and the campaign framework. Want the
-tone adjusted? Those files are the dial.
+## 6. This Week: your notes
 
-**A draft has the wrong tone or facts.** Hit **Regenerate** in the Approval
-Queue — the writer takes a fresh pass. Every draft also passes an automatic
-voice check (banned phrases, first-name greeting, correct signature) before
-it reaches you.
+Each card shows who it is to, your note about them, and the draft.
 
-**Can I add a prospect myself?** Yes — **New deal** on the Pipeline board, or
-add the company/contact in the directory first.
+1. Read it. Edit the subject or the text right in the box if you want.
+2. Tap Send. It goes from your own Gmail, and the next touch for that person is scheduled.
+3. Not this week? Tap Skip. They come back next cycle.
 
-**What if I skip a few days?** Nothing sends without you. Drafts simply
-accumulate in the queue.
+## 7. Redo
+
+Not quite right? Tap Redo, type what you want (for example, "mention the Lenox Hill job, ask about lunch"), then tap Rewrite. You get a fresh draft. Nothing sends until you tap Send.
+
+## 8. Sunday email
+
+Every Sunday morning you get a short email from your Gmail to your Gmail listing who is up that week, with a link back here. Turn it off in Settings under Sunday email to myself.
+
+## 9. Replies
+
+When someone writes back, the note shows Replied under Recently sent. Their reply is in your normal inbox like any other email.
+
+## Good to know
+
+- Going on vacation? Settings, Pause everything. No new notes until you turn it back on.
+- Settings also has the most notes per week and how your notes are signed.
+- Want to write notes before Sunday? On This Week, tap Write this week's notes now.
+- Take someone off the list: People, find them, Remove from list.
 
 ## For whoever maintains this
 
-- Deployed on Vercel; data in Neon Postgres. Env vars: `DATABASE_URL`,
-  `DASHBOARD_PASSWORD`, `ANTHROPIC_API_KEY`, `SENDER_PHONE`,
-  `SENDER_WEBSITE`, optional `RESEND_API_KEY`/`DIGEST_TO` for the emailed
-  digest. Env changes take effect on the next deploy.
-- Migrations: `npm run migrate`, `migrate:campaign`, `migrate:signals`,
-  `migrate:repair` (all idempotent).
-- `npm run drafts:regenerate` — one-shot refresh of all pending drafts after
-  a voice/signature change.
+- Vercel project marathon-crm-dashboard, Root Directory web/. Data in Neon Postgres.
+- Sign in is Google only. ALLOWED_EMAILS is a comma separated list; the first address is the owner (Mike), whose sign in sets the sending Gmail. Others can sign in without replacing it. Removing an address locks that person out on their next click.
+- Env vars: DATABASE_URL, ANTHROPIC_API_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TOKEN_ENC_KEY, ALLOWED_EMAILS, CRON_SECRET. Optional: GOOGLE_REDIRECT_URI (defaults to the site's own /api/google/callback), SESSION_SECRET, SHOW_PROSPECTING=1 to show the Phase B screens, PIPELINE_MODE=outbound to turn outbound drafting on (off by default).
+- Every host used for sign in needs its /api/google/callback added as an Authorized redirect URI on the Google OAuth client.
+- Tests: npm run test:auth, npm run test:gmail, npm run test:keepwarm.
